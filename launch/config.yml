@@ -1,0 +1,52 @@
+# Relaychain Configuration
+relaychain:
+  image: parity/polkadot:v0.9.10 # the docker image to use
+  chain: rococo-local # the chain to use
+  runtimeGenesisConfig: # additonal genesis override
+    configuration:
+      config:
+        validation_upgrade_frequency: 1
+        validation_upgrade_delay: 1
+  env: # environment variables for all relaychain nodes
+    RUST_LOG: parachain::candidate-backing=trace
+  flags: # additional CLI flags for all relaychain nodes
+    - --rpc-methods=unsafe
+    - --no-beefy
+  nodes: # nodes config
+    - name: alice # the node name and session key, this imply `--alice`
+      flags: # additional CLI flags for this node
+        - --force-authoring
+      env:
+        RUST_LOG: babe=debug # environment varitables for this node
+    - name: bob
+      flags: # additional CLI flags for this node
+        - --force-authoring
+
+# Parachain Configuration
+parachains:
+  # Config for first parachain
+  - image: mars
+    chain: # this could be a string like `dev` or a config object
+      base: mars
+    id: 2000 # override parachain id
+    parachain: true # this is parachain, not parathread
+    flags: # CLI flags for this parachain nodes
+      - --rpc-methods=unsafe
+      - --force-authoring
+      - --execution=wasm
+      - --warehouse=http://api.aresprotocol.io
+    relaychainFlags: # CLI flags for the relaychain port
+      - --execution=wasm
+      - --no-beefy
+    env: # environment variables for this parachain nodes
+      RUST_LOG: sc_basic_authorship=trace,cumulus-consensus=trace,cumulus-collator=trace,collator_protocol=trace,collation_generation=trace,aura=debug
+    volumePath: /data # The path to mount volume and base path, default to /data
+    nodes: # nodes config
+      - name: node1
+      - name: node2
+#  - flags: # additional CLI flags for this node
+#      - --alice
+#    relaychainFlags: # additional CLI flags for relaychian part
+#      - --name=relaychain-alice
+#  - flags:
+#    - --bob
