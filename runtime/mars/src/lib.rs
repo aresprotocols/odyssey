@@ -487,7 +487,7 @@ construct_runtime! {
 		AresChallenge: pallet_ares_challenge::{Pallet, Call, Storage, Event<T>},
 		// MemberExtend: member_extend::{Pallet},
 		OracleFinance: oracle_finance::{Pallet, Call, Storage, Event<T>},
-		// AresOracle: ares_oracle::{Pallet, Call, Storage, Event<T>, ValidateUnsigned, Config<T>},
+		AresOracle: ares_oracle::{Pallet, Call, Storage, Event<T>, ValidateUnsigned, Config<T>},
 		// StakingExtend: staking_extend::{Pallet},
 
 		// XCM helpers.

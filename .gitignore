@@ -5,6 +5,8 @@
 /.cargo/config
 polkadot_argument_parsing
 **/node_modules
+/docker/mars.tar
+*.private.*
 
 /data.will.del
 **/*.private.md
