@@ -85,7 +85,7 @@ mod weights;
 mod part_challenge;
 mod part_member_extend;
 mod part_offchain;
-// pub mod part_oracle;
+pub mod part_oracle;
 mod part_oracle_finance;
 // mod part_staking_extend;
 pub type SessionHandlers = ();

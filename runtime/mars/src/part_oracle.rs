@@ -3,6 +3,8 @@ use ares_oracle;
 pub use ares_oracle::LOCAL_STORAGE_PRICE_REQUEST_DOMAIN;
 use ares_oracle_provider_support::crypto::sr25519::AuthorityId as AresId;
 use frame_support::sp_runtime::app_crypto::sp_core::u32_trait::{_1, _2};
+use frame_support::sp_std::marker::PhantomData;
+use staking_extend::IStakingNpos;
 use governance::part_technical::TechnicalCollective;
 
 pub type EnsureRootOrHalfTechnicalCollective = EnsureOneOf<
@@ -31,6 +33,28 @@ impl ares_oracle::Config for Runtime {
     type RequestOrigin = EnsureRootOrHalfTechnicalCollective;
     type AuthorityCount = AresOracle; // ares_oracle::aura_handler::Pallet<Runtime>;
     type OracleFinanceHandler = OracleFinance;
-    type AresIStakingNpos = Self;
+    type AresIStakingNpos = NoNpos<Self>;
     type ErrLogPoolDepth = ErrLogPoolDepth;
+}
+
+pub struct NoNpos<T>(PhantomData<T>);
+impl<A, B, T> IStakingNpos<A, B> for NoNpos<T>
+    where T: ares_oracle::Config
+{
+    type StashId = T::AccountId;
+    fn current_staking_era() -> u32 {
+        0
+    }
+    fn near_era_change(_leading_period: B) -> bool {
+        false
+    }
+    fn calculate_near_era_change(_period_multiple: B, _current_bn: B, _session_length: B, _per_era: B) -> bool {
+        false
+    }
+    fn old_npos() -> sp_core::sp_std::vec::Vec<Self::StashId> {
+        Vec::new()
+    }
+    fn pending_npos() -> sp_core::sp_std::vec::Vec<(Self::StashId, Option<A>)> {
+        Vec::new()
+    }
 }
