@@ -15,8 +15,7 @@ pub type ChainSpec = sc_service::GenericChainSpec<mars_runtime::GenesisConfig, E
 pub const PARA_ID: ParaId = ParaId::new(2008);
 
 pub fn mars_session_keys(aura: AuraId, ares: AresId) -> SessionKeys {
-	// SessionKeys { aura, ares }
-	SessionKeys { aura }
+	SessionKeys { aura, ares }
 }
 
 pub fn mars_development_config(id: ParaId) -> ChainSpec {

@@ -1,7 +1,7 @@
 use super::*;
 
 use mars_runtime::{api::dispatch, native_version, RuntimeApi};
-// use mars_runtime::part_oracle::LOCAL_STORAGE_PRICE_REQUEST_DOMAIN;
+use mars_runtime::part_oracle::LOCAL_STORAGE_PRICE_REQUEST_DOMAIN;
 native_executor_instance!(
 	pub RuntimeExecutor,
 	dispatch,
@@ -83,11 +83,11 @@ pub async fn start_parachain_node(
                                     log::info!("setting request_domain: {:?}", request_base_str);
                                     if let Some(mut offchain_db) = backend_clone.offchain_storage() {
                                         log::debug!("after setting request_domain: {:?}", request_base_str);
-                                        // offchain_db.set(
-                                        //     STORAGE_PREFIX,
-                                        //     LOCAL_STORAGE_PRICE_REQUEST_DOMAIN,
-                                        //     store_request_u8.as_slice(),
-                                        // );
+                                        offchain_db.set(
+                                            STORAGE_PREFIX,
+                                            LOCAL_STORAGE_PRICE_REQUEST_DOMAIN,
+                                            store_request_u8.as_slice(),
+                                        );
                                     }
                                     (*order, true)
                                 }

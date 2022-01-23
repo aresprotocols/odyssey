@@ -5,7 +5,7 @@ use pallet_session;
 impl_opaque_keys! {
     pub struct SessionKeys {
         pub aura: Aura,
-        // pub ares: AresOracle,
+        pub ares: AresOracle,
     }
 }
 
