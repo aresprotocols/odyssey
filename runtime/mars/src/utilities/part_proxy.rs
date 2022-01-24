@@ -16,7 +16,17 @@ parameter_types! {
 
 /// The type used to represent the kinds of proxying allowed.
 #[derive(
-    Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Encode, Decode, RuntimeDebug, MaxEncodedLen,
+Copy,
+Clone,
+Eq,
+PartialEq,
+Ord,
+PartialOrd,
+Encode,
+Decode,
+RuntimeDebug,
+MaxEncodedLen,
+scale_info::TypeInfo,
 )]
 pub enum ProxyType {
     Any,
@@ -37,26 +47,26 @@ impl InstanceFilter<Call> for ProxyType {
             ProxyType::Any => true,
             ProxyType::NonTransfer => !matches!(
                 c,
-                Call::System(..)
-                | Call::Timestamp(..)
-                // | Call::Democracy(..) | Call::Council(..)
-                // | Call::TechnicalCommittee(..)
-                | Call::Utility(..) | Call::Proxy(..)
+                Call::System{ .. }
+                | Call::Timestamp{ .. }
+                // | Call::Democracy{ .. } | Call::Council{ .. }
+                // | Call::TechnicalCommittee{ .. }
+                | Call::Utility{ .. } | Call::Proxy{ .. }
             ),
             ProxyType::Governance => matches!(
                 c,
-                // Call::Democracy(..) |
-                //     Call::Council(..) |
-                // Call::TechnicalCommittee(..) |
-                Call::Utility(..)
+                // Call::Democracy{ .. } |
+                //     Call::Council{ .. } |
+                // Call::TechnicalCommittee{ .. } |
+                Call::Utility{ .. }
             ),
             ProxyType::Staking => matches!(
                 c,
-                // Call::Staking(..)
-                Call::Utility(..)
+                // Call::Staking{ .. }
+                Call::Utility{ .. }
             ),
             ProxyType::CancelProxy => {
-                matches!(c, Call::Proxy(pallet_proxy::Call::reject_announcement(..)))
+                matches!(c, Call::Proxy(pallet_proxy::Call::reject_announcement{ .. }))
             }
         }
     }

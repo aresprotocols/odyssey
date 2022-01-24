@@ -10,7 +10,7 @@ impl_opaque_keys! {
 }
 
 parameter_types! {
-    pub const DisabledValidatorsThreshold: Perbill = Perbill::from_percent(17);
+    // pub const DisabledValidatorsThreshold: Perbill = Perbill::from_percent(17);
     pub const Period: u32 = EPOCH_DURATION_IN_BLOCKS as u32; // 100 block = 10min  [10b = 1min] [10min = 100b]
     pub const Offset: u32 = 0;
 }
@@ -27,7 +27,7 @@ impl pallet_session::Config for Runtime {
     // type SessionHandler = <SessionKeys as sp_runtime::traits::OpaqueKeys>::KeyTypeIdProviders;
     type SessionHandler = <SessionKeys as sp_runtime::traits::OpaqueKeys>::KeyTypeIdProviders;
     type Keys = SessionKeys;
-    type DisabledValidatorsThreshold = DisabledValidatorsThreshold;
+    // type DisabledValidatorsThreshold = DisabledValidatorsThreshold;
     type WeightInfo = weights::pallet_session::WeightInfo<Runtime>;
 }
 

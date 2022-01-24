@@ -217,6 +217,7 @@ impl pallet_balances::Config for Runtime {
 parameter_types! {
 	/// Relay Chain `TransactionByteFee` / 10
 	pub const TransactionByteFee: Balance = 1 * MILLICENTS;
+	pub const OperationalFeeMultiplier: u8 = 5;
 }
 
 impl pallet_transaction_payment::Config for Runtime {
@@ -224,6 +225,7 @@ impl pallet_transaction_payment::Config for Runtime {
 	type TransactionByteFee = TransactionByteFee;
 	type WeightToFee = WeightToFee;
 	type FeeMultiplierUpdate = SlowAdjustingFeeUpdate<Self>;
+	type OperationalFeeMultiplier = OperationalFeeMultiplier;
 }
 
 impl pallet_randomness_collective_flip::Config for Runtime {}
@@ -233,7 +235,7 @@ parameter_types! {
 	pub const ApprovalDeposit: Balance = EXISTENTIAL_DEPOSIT;
 	pub const AssetsStringLimit: u32 = 50;
 	/// Key = 32 bytes, Value = 36 bytes (32+1+1+1+1)
-	// https://github.com/paritytech/substrate/blob/069917b/frame/assets/src/lib.rs#L257L271
+	// https://github.com/zzm-Zhong/substrate/blob/069917b/frame/assets/src/lib.rs#L257L271
 	pub const MetadataDepositBase: Balance = deposit(1, 68);
 	pub const MetadataDepositPerByte: Balance = deposit(0, 1);
 	pub const ExecutiveBody: BodyId = BodyId::Executive;
@@ -280,6 +282,7 @@ impl pallet_multisig::Config for Runtime {
 impl pallet_utility::Config for Runtime {
 	type Event = Event;
 	type Call = Call;
+	type PalletsOrigin = OriginCaller;
 	type WeightInfo = weights::pallet_utility::WeightInfo<Runtime>;
 }
 
@@ -296,7 +299,19 @@ parameter_types! {
 }
 
 /// The type used to represent the kinds of proxying allowed.
-#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Encode, Decode, RuntimeDebug, MaxEncodedLen)]
+#[derive(
+Copy,
+Clone,
+Eq,
+PartialEq,
+Ord,
+PartialOrd,
+Encode,
+Decode,
+RuntimeDebug,
+MaxEncodedLen,
+scale_info::TypeInfo,
+)]
 pub enum ProxyType {
 	/// Fully permissioned proxy. Can execute any call on behalf of _proxied_.
 	Any,
@@ -322,54 +337,54 @@ impl InstanceFilter<Call> for ProxyType {
 	fn filter(&self, c: &Call) -> bool {
 		match self {
 			ProxyType::Any => true,
-			ProxyType::NonTransfer => !matches!(c, Call::Balances(..) | Call::Assets(..) | Call::Uniques(..)),
+			ProxyType::NonTransfer => !matches!(c, Call::Balances{ .. } | Call::Assets{ .. } | Call::Uniques{ .. }),
 			ProxyType::CancelProxy => matches!(
 				c,
-				Call::Proxy(pallet_proxy::Call::reject_announcement(..)) | Call::Utility(..) | Call::Multisig(..)
+				Call::Proxy(pallet_proxy::Call::reject_announcement{ .. }) | Call::Utility{ .. } | Call::Multisig{ .. }
 			),
 			ProxyType::Assets => {
 				matches!(
 					c,
-					Call::Assets(..) | Call::Utility(..) | Call::Multisig(..) | Call::Uniques(..)
+					Call::Assets{ .. } | Call::Utility{ .. } | Call::Multisig{ .. } | Call::Uniques{ .. }
 				)
 			}
 			ProxyType::AssetOwner => matches!(
 				c,
-				Call::Assets(pallet_assets::Call::create(..))
-					| Call::Assets(pallet_assets::Call::destroy(..))
-					| Call::Assets(pallet_assets::Call::transfer_ownership(..))
-					| Call::Assets(pallet_assets::Call::set_team(..))
-					| Call::Assets(pallet_assets::Call::set_metadata(..))
-					| Call::Assets(pallet_assets::Call::clear_metadata(..))
-					| Call::Uniques(pallet_uniques::Call::create(..))
-					| Call::Uniques(pallet_uniques::Call::destroy(..))
-					| Call::Uniques(pallet_uniques::Call::transfer_ownership(..))
-					| Call::Uniques(pallet_uniques::Call::set_team(..))
-					| Call::Uniques(pallet_uniques::Call::set_metadata(..))
-					| Call::Uniques(pallet_uniques::Call::set_attribute(..))
-					| Call::Uniques(pallet_uniques::Call::set_class_metadata(..))
-					| Call::Uniques(pallet_uniques::Call::clear_metadata(..))
-					| Call::Uniques(pallet_uniques::Call::clear_attribute(..))
-					| Call::Uniques(pallet_uniques::Call::clear_class_metadata(..))
-					| Call::Utility(..) | Call::Multisig(..)
+				Call::Assets(pallet_assets::Call::create{ .. })
+					| Call::Assets(pallet_assets::Call::destroy{ .. })
+					| Call::Assets(pallet_assets::Call::transfer_ownership{ .. })
+					| Call::Assets(pallet_assets::Call::set_team{ .. })
+					| Call::Assets(pallet_assets::Call::set_metadata{ .. })
+					| Call::Assets(pallet_assets::Call::clear_metadata{ .. })
+					| Call::Uniques(pallet_uniques::Call::create{ .. })
+					| Call::Uniques(pallet_uniques::Call::destroy{ .. })
+					| Call::Uniques(pallet_uniques::Call::transfer_ownership{ .. })
+					| Call::Uniques(pallet_uniques::Call::set_team{ .. })
+					| Call::Uniques(pallet_uniques::Call::set_metadata{ .. })
+					| Call::Uniques(pallet_uniques::Call::set_attribute{ .. })
+					| Call::Uniques(pallet_uniques::Call::set_class_metadata{ .. })
+					| Call::Uniques(pallet_uniques::Call::clear_metadata{ .. })
+					| Call::Uniques(pallet_uniques::Call::clear_attribute{ .. })
+					| Call::Uniques(pallet_uniques::Call::clear_class_metadata{ .. })
+					| Call::Utility{ .. } | Call::Multisig{ .. }
 			),
 			ProxyType::AssetManager => matches!(
 				c,
-				Call::Assets(pallet_assets::Call::mint(..))
-					| Call::Assets(pallet_assets::Call::burn(..))
-					| Call::Assets(pallet_assets::Call::freeze(..))
-					| Call::Assets(pallet_assets::Call::thaw(..))
-					| Call::Assets(pallet_assets::Call::freeze_asset(..))
-					| Call::Assets(pallet_assets::Call::thaw_asset(..))
-					| Call::Uniques(pallet_uniques::Call::mint(..))
-					| Call::Uniques(pallet_uniques::Call::burn(..))
-					| Call::Uniques(pallet_uniques::Call::freeze(..))
-					| Call::Uniques(pallet_uniques::Call::thaw(..))
-					| Call::Uniques(pallet_uniques::Call::freeze_class(..))
-					| Call::Uniques(pallet_uniques::Call::thaw_class(..))
-					| Call::Utility(..) | Call::Multisig(..)
+				Call::Assets(pallet_assets::Call::mint{ .. })
+					| Call::Assets(pallet_assets::Call::burn{ .. })
+					| Call::Assets(pallet_assets::Call::freeze{ .. })
+					| Call::Assets(pallet_assets::Call::thaw{ .. })
+					| Call::Assets(pallet_assets::Call::freeze_asset{ .. })
+					| Call::Assets(pallet_assets::Call::thaw_asset{ .. })
+					| Call::Uniques(pallet_uniques::Call::mint{ .. })
+					| Call::Uniques(pallet_uniques::Call::burn{ .. })
+					| Call::Uniques(pallet_uniques::Call::freeze{ .. })
+					| Call::Uniques(pallet_uniques::Call::thaw{ .. })
+					| Call::Uniques(pallet_uniques::Call::freeze_class{ .. })
+					| Call::Uniques(pallet_uniques::Call::thaw_class{ .. })
+					| Call::Utility{ .. } | Call::Multisig{ .. }
 			),
-			ProxyType::Collator => matches!(c, Call::CollatorSelection(..) | Call::Utility(..) | Call::Multisig(..)),
+			ProxyType::Collator => matches!(c, Call::CollatorSelection{ .. } | Call::Utility{ .. } | Call::Multisig{ .. }),
 		}
 	}
 	fn is_superset(&self, o: &Self) -> bool {
@@ -479,6 +494,7 @@ pub type XcmOriginToTransactDispatchOrigin = (
 parameter_types! {
 	// One XCM operation is 1_000_000 weight - almost certainly a conservative estimate.
 	pub UnitWeightCost: Weight = 1_000_000;
+	pub const MaxInstructions: u32 = 100;
 }
 
 match_type! {
@@ -506,9 +522,11 @@ impl Config for XcmConfig {
 	type IsTeleporter = NativeAsset; // <- should be enough to allow teleportation of DOT
 	type LocationInverter = LocationInverter<Ancestry>;
 	type Barrier = Barrier;
-	type Weigher = FixedWeightBounds<UnitWeightCost, Call>;
+	type Weigher = FixedWeightBounds<UnitWeightCost, Call, MaxInstructions>;
 	type Trader = UsingComponents<IdentityFee<Balance>, DotLocation, AccountId, Balances, ()>;
 	type ResponseHandler = (); // Don't handle responses for now.
+	type AssetTrap = PolkadotXcm;
+	type AssetClaims = PolkadotXcm;
 	type SubscriptionService = PolkadotXcm;
 }
 
@@ -537,9 +555,14 @@ impl pallet_xcm::Config for Runtime {
 	type XcmExecutor = XcmExecutor<XcmConfig>;
 	type XcmTeleportFilter = Everything;
 	type XcmReserveTransferFilter = Everything;
-	type Weigher = FixedWeightBounds<UnitWeightCost, Call>;
+	type Weigher = FixedWeightBounds<UnitWeightCost, Call, MaxInstructions>;
 	type LocationInverter = LocationInverter<Ancestry>;
+	type Origin = Origin;
+	type Call = Call;
+	const VERSION_DISCOVERY_QUEUE_SIZE: u32 = 100;
+	type AdvertisedXcmVersion = pallet_xcm::CurrentXcmVersion;
 }
+
 
 impl cumulus_pallet_xcm::Config for Runtime {
 	type Event = Event;
@@ -560,9 +583,10 @@ impl cumulus_pallet_dmp_queue::Config for Runtime {
 }
 
 parameter_types! {
-	pub const DisabledValidatorsThreshold: Perbill = Perbill::from_percent(33);
+	// pub const DisabledValidatorsThreshold: Perbill = Perbill::from_percent(33);
 	pub const Period: u32 = 6 * HOURS;
 	pub const Offset: u32 = 0;
+	pub const MaxAuthorities: u32 = 100_000;
 }
 
 impl pallet_session::Config for Runtime {
@@ -576,13 +600,14 @@ impl pallet_session::Config for Runtime {
 	// Essentially just Aura, but lets be pedantic.
 	type SessionHandler = <opaque::SessionKeys as sp_runtime::traits::OpaqueKeys>::KeyTypeIdProviders;
 	type Keys = opaque::SessionKeys;
-	type DisabledValidatorsThreshold = DisabledValidatorsThreshold;
+	// type DisabledValidatorsThreshold = DisabledValidatorsThreshold;
 	type WeightInfo = weights::pallet_session::WeightInfo<Runtime>;
 }
 
 impl pallet_aura::Config for Runtime {
 	type AuthorityId = AuraId;
 	type DisabledValidators = ();
+	type MaxAuthorities = MaxAuthorities;
 }
 
 parameter_types! {
@@ -718,7 +743,7 @@ impl_runtime_apis! {
 		}
 
 		fn authorities() -> Vec<AuraId> {
-			Aura::authorities()
+			Aura::authorities().into_inner()
 		}
 	}
 
@@ -738,7 +763,7 @@ impl_runtime_apis! {
 
 	impl sp_api::Metadata<Block> for Runtime {
 		fn metadata() -> OpaqueMetadata {
-			Runtime::metadata().into()
+			OpaqueMetadata::new(Runtime::metadata().into())
 		}
 	}
 
