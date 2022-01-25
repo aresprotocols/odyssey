@@ -5,24 +5,36 @@ use template_runtime::{
     api::dispatch,
     RuntimeApi
 };
+use sc_executor::NativeElseWasmExecutor;
 
-native_executor_instance!(
-    pub RuntimeExecutor,
-    dispatch,
-    native_version,
-    frame_benchmarking::benchmarking::HostFunctions,
-);
+// native_executor_instance!(
+//     pub RuntimeExecutor,
+//     dispatch,
+//     native_version,
+//     frame_benchmarking::benchmarking::HostFunctions,
+// );
+
+pub struct TemplateRuntimeExecutor;
+impl sc_executor::NativeExecutionDispatch for TemplateRuntimeExecutor {
+    type ExtendHostFunctions = frame_benchmarking::benchmarking::HostFunctions;
+    fn dispatch(method: &str, data: &[u8]) -> Option<Vec<u8>> {
+        template_runtime::api::dispatch(method, data)
+    }
+    fn native_version() -> sc_executor::NativeVersion {
+        template_runtime::native_version()
+    }
+}
 
 /// Build the import queue for the rococo parachain runtime.
 pub fn parachain_build_import_queue(
-    client: Arc<TFullClient<Block, RuntimeApi, RuntimeExecutor>>,
+    client: Arc<TFullClient<Block, RuntimeApi, NativeElseWasmExecutor<TemplateRuntimeExecutor>>>,
     config: &Configuration,
     telemetry: Option<TelemetryHandle>,
     task_manager: &TaskManager,
 ) -> Result<
     sc_consensus::DefaultImportQueue<
         Block,
-        TFullClient<Block, RuntimeApi, RuntimeExecutor>,
+        TFullClient<Block, RuntimeApi, NativeElseWasmExecutor<TemplateRuntimeExecutor>>,
     >,
     sc_service::Error,
 > {
@@ -65,9 +77,9 @@ pub async fn start_parachain_node(
     id: ParaId,
 ) -> sc_service::error::Result<(
     TaskManager,
-    Arc<TFullClient<Block, RuntimeApi, RuntimeExecutor>>,
+    Arc<TFullClient<Block, RuntimeApi, NativeElseWasmExecutor<TemplateRuntimeExecutor>>>,
 )> {
-    start_node_impl::<RuntimeApi, RuntimeExecutor, _, _, _>(
+    start_node_impl::<RuntimeApi, TemplateRuntimeExecutor, _, _, _>(
         parachain_config,
         polkadot_config,
         id,
@@ -83,9 +95,7 @@ pub async fn start_parachain_node(
          sync_oracle,
          keystore,
          force_authoring| {
-
             let slot_duration = cumulus_client_consensus_aura::slot_duration(&*client)?;
-
             let proposer_factory = sc_basic_authorship::ProposerFactory::with_proof_recording(
                 task_manager.spawn_handle(),
                 client.clone(),
@@ -93,7 +103,6 @@ pub async fn start_parachain_node(
                 prometheus_registry.clone(),
                 telemetry.clone(),
             );
-
             let relay_chain_backend = relay_chain_node.backend.clone();
             let relay_chain_client = relay_chain_node.client.clone();
             Ok(build_aura_consensus::<

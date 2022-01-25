@@ -2,21 +2,39 @@ use super::*;
 
 use mars_runtime::{api::dispatch, native_version, RuntimeApi};
 use mars_runtime::part_oracle::LOCAL_STORAGE_PRICE_REQUEST_DOMAIN;
-native_executor_instance!(
-	pub RuntimeExecutor,
-	dispatch,
-	native_version,
-	frame_benchmarking::benchmarking::HostFunctions,
-);
 use log;
+use sc_executor::NativeElseWasmExecutor;
+
+// native_executor_instance!(
+// 	pub RuntimeExecutor,
+// 	dispatch,
+// 	native_version,
+// 	frame_benchmarking::benchmarking::HostFunctions,
+// );
+
+pub struct MarsRuntimeExecutor;
+impl sc_executor::NativeExecutionDispatch for MarsRuntimeExecutor {
+	type ExtendHostFunctions = frame_benchmarking::benchmarking::HostFunctions;
+	fn dispatch(method: &str, data: &[u8]) -> Option<Vec<u8>> {
+		mars_runtime::api::dispatch(method, data)
+	}
+	fn native_version() -> sc_executor::NativeVersion {
+		mars_runtime::native_version()
+	}
+}
 
 /// Build the import queue for the rococo parachain runtime.
 pub fn parachain_build_import_queue(
-	client: Arc<TFullClient<Block, RuntimeApi, RuntimeExecutor>>,
+	client: Arc<TFullClient<Block, RuntimeApi, NativeElseWasmExecutor<MarsRuntimeExecutor>>>,
 	config: &Configuration,
 	telemetry: Option<TelemetryHandle>,
 	task_manager: &TaskManager,
-) -> Result<sc_consensus::DefaultImportQueue<Block, TFullClient<Block, RuntimeApi, RuntimeExecutor>>, sc_service::Error>
+) -> Result<
+	sc_consensus::DefaultImportQueue<
+		Block,
+		TFullClient<Block, RuntimeApi, NativeElseWasmExecutor<MarsRuntimeExecutor>>
+	>, sc_service::Error
+>
 {
 	let slot_duration = cumulus_client_consensus_aura::slot_duration(&*client)?;
 
@@ -49,8 +67,14 @@ pub async fn start_parachain_node(
 	polkadot_config: Configuration,
 	id: ParaId,
     ares_params: Vec<(&str, Option<Vec<u8>>)>,
-) -> sc_service::error::Result<(TaskManager, Arc<TFullClient<Block, RuntimeApi, RuntimeExecutor>>)> {
-	start_node_impl::<RuntimeApi, RuntimeExecutor, _, _, _>(
+) -> sc_service::error::Result<(
+	TaskManager,
+	Arc<TFullClient<Block, RuntimeApi, NativeElseWasmExecutor<MarsRuntimeExecutor>>>,
+)> {
+	start_node_impl::<
+		RuntimeApi,
+		MarsRuntimeExecutor, _, _, _>
+	(
 		parachain_config,
 		polkadot_config,
 		id,
@@ -66,7 +90,6 @@ pub async fn start_parachain_node(
 		 sync_oracle,
 		 keystore,
 		 force_authoring| {
-
             // TODO insert ares params
             log::info!("🚅 Setting ares_params :-) {:?}", ares_params);
             let backend_clone = backend.clone();

@@ -208,6 +208,15 @@ impl frame_system::Config for Runtime {
 	type OnSetCode = cumulus_pallet_parachain_system::ParachainSetCode<Self>;
 }
 
+impl pallet_transaction_payment::Config for Runtime {
+	type OnChargeTransaction =
+	pallet_transaction_payment::CurrencyAdapter<Balances, DealWithFees<Runtime>>;
+	type TransactionByteFee = TransactionByteFee;
+	type WeightToFee = WeightToFee;
+	type FeeMultiplierUpdate = SlowAdjustingFeeUpdate<Self>;
+	type OperationalFeeMultiplier = OperationalFeeMultiplier;
+}
+
 parameter_types! {
 	pub const MinimumPeriod: u64 = SLOT_DURATION / 2;
 }
@@ -249,14 +258,6 @@ impl pallet_balances::Config for Runtime {
 }
 
 // impl pallet_randomness_collective_flip::Config for Runtime {}
-
-impl pallet_transaction_payment::Config for Runtime {
-	type OnChargeTransaction = pallet_transaction_payment::CurrencyAdapter<Balances, ()>;
-	type TransactionByteFee = TransactionByteFee;
-	type WeightToFee = IdentityFee<Balance>;
-	type FeeMultiplierUpdate = ();
-	type OperationalFeeMultiplier = OperationalFeeMultiplier;
-}
 
 impl pallet_sudo::Config for Runtime {
 	type Call = Call;

@@ -227,7 +227,7 @@ macro_rules! construct_async_run {
 		} else */
 		if runner.config().chain_spec.is_mars() {
 			runner.async_run(|$config| {
-				let $components = new_partial::<mars_runtime::RuntimeApi, service::mars::RuntimeExecutor, _>(
+				let $components = new_partial::<mars_runtime::RuntimeApi, service::mars::MarsRuntimeExecutor, _>(
 					&$config,
 					crate::service::mars::parachain_build_import_queue,
 				)?;
@@ -236,7 +236,7 @@ macro_rules! construct_async_run {
 			})
 		} else if runner.config().chain_spec.is_dev(){
 			runner.async_run(|$config| {
-					let $components = new_partial::<template_runtime::RuntimeApi, service::template::RuntimeExecutor, _>(
+					let $components = new_partial::<template_runtime::RuntimeApi, service::template::TemplateRuntimeExecutor, _>(
 					&$config,
 					crate::service::template::parachain_build_import_queue,
 				)?;
@@ -247,7 +247,7 @@ macro_rules! construct_async_run {
 			runner.async_run(|$config| {
 				let $components = new_partial::<
 					mars_runtime::RuntimeApi,
-					service::mars::RuntimeExecutor,
+					service::mars::MarsRuntimeExecutor,
 					_
 				>(
 					&$config,
@@ -573,17 +573,17 @@ impl CliConfiguration<Self> for RelayChainCli {
 		self.base.base.rpc_ws_max_connections()
 	}
 
-	fn rpc_http_threads(&self) -> Result<Option<usize>> {
-		self.base.base.rpc_http_threads()
-	}
+	// fn rpc_http_threads(&self) -> Result<Option<usize>> {
+	// 	self.base.base.rpc_http_threads()
+	// }
 
 	fn rpc_cors(&self, is_dev: bool) -> Result<Option<Vec<String>>> {
 		self.base.base.rpc_cors(is_dev)
 	}
 
-	fn telemetry_external_transport(&self) -> Result<Option<sc_service::config::ExtTransport>> {
-		self.base.base.telemetry_external_transport()
-	}
+	// fn telemetry_external_transport(&self) -> Result<Option<sc_service::config::ExtTransport>> {
+	// 	self.base.base.telemetry_external_transport()
+	// }
 
 	fn default_heap_pages(&self) -> Result<Option<u64>> {
 		self.base.base.default_heap_pages()

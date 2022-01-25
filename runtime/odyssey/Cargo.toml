@@ -38,7 +38,6 @@ pallet-aura = { git = "https://github.com/zzm-Zhong/substrate", default-features
 pallet-authorship = { git = "https://github.com/zzm-Zhong/substrate", default-features = false, branch = "polkadot-v0.9.13-fix" }
 pallet-session = { git = "https://github.com/zzm-Zhong/substrate", default-features = false, branch = "polkadot-v0.9.13-fix" }
 
-
 # Cumulus dependencies
 cumulus-primitives-core = { git = "https://github.com/kami1983/ares-cumulus", default-features = false, branch = "polkadot-v0.9.13-fix" }
 cumulus-primitives-utility = { git = "https://github.com/kami1983/ares-cumulus", default-features = false, branch = "polkadot-v0.9.13-fix" }
