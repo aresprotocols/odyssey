@@ -31,8 +31,7 @@ async-trait = "0.1.42"
 #statemint-common = { path = "statemint-common" }
 mars-runtime = { path = "../runtime/mars" }
 template-runtime = { path = "../runtime/template" }
-
-#odyssey-runtime = { path = "odyssey" }
+odyssey-runtime = { path = "../runtime/odyssey" }
 
 
 # Substrate dependencies

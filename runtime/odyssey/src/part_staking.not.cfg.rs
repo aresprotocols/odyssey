@@ -1,5 +1,5 @@
 use super::*;
-use ares_para_common::constants::currency::*;
+use constants::currency::*;
 use pallet_staking;
 
 

@@ -1,5 +1,5 @@
 use super::*;
-use ares_para_common::constants::currency::AMAS_UNITS;
+use constants::currency::AMAS_UNITS;
 use governance;
 pub use pallet_ares_challenge;
 pub use pallet_ares_collective;

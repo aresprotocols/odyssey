@@ -14,7 +14,7 @@ use polkadot_service::ParaId;
 const AMAS_ED: MarsBalance = mars_runtime::constants::currency::EXISTENTIAL_DEPOSIT;
 
 pub type ChainSpec = sc_service::GenericChainSpec<mars_runtime::GenesisConfig, Extensions>;
-pub const PARA_ID_NUM: u32 = 2000;
+pub const PARA_ID_NUM: u32 = 2008;
 pub const PARA_ID: ParaId = ParaId::new(PARA_ID_NUM);
 
 pub fn mars_session_keys(aura: AuraId, ares: AresId) -> SessionKeys {
@@ -92,11 +92,6 @@ fn mars_genesis(
 	const TOTAL_ISSUANCE: MarsBalance = constants::currency::AMAS_UNITS * 1_000_000_000; // one billion
 	let endowment: MarsBalance = TOTAL_ISSUANCE / endowed_accounts.len() as u128;
 	let elections_stash: MarsBalance = endowment / 1000;
-
-	// let stakers = initial_authorities
-	// 	.iter()
-	// 	.map(|x| (x.0.clone(), x.1.clone(), elections_stash, StakerStatus::Validator))
-	// 	.collect::<Vec<_>>();
 
 	GenesisConfig {
 		system: SystemConfig {

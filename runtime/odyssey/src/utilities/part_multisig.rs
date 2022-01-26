@@ -1,5 +1,5 @@
 use super::*;
-use ares_para_common::constants::currency::deposit;
+use constants::currency::deposit;
 use pallet_multisig;
 
 parameter_types! {
