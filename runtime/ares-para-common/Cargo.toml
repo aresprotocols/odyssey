@@ -1,0 +1,35 @@
+[package]
+name = "ares-para-common"
+version = "1.0.0"
+authors = ["Ares Protocol Lab"]
+edition = "2021"
+description = "Logic which is common to all parachain runtimes"
+
+[package.metadata.docs.rs]
+targets = ['x86_64-unknown-linux-gnu']
+
+[dependencies]
+# External dependencies
+codec = { package = 'parity-scale-codec', version = '2.3.0', features = ['derive'], default-features = false }
+frame-executive = { git = "https://github.com/zzm-Zhong/substrate", default-features = false, branch = "polkadot-v0.9.13-fix" }
+frame-system = { git = "https://github.com/zzm-Zhong/substrate", default-features = false, branch = "polkadot-v0.9.13-fix" }
+sp-core = { git = "https://github.com/zzm-Zhong/substrate", default-features = false, branch = "polkadot-v0.9.13-fix" }
+scale-info = { version = "1.0.0", default-features = false, features = ["derive"] }
+sp-consensus-aura = { git = "https://github.com/zzm-Zhong/substrate", default-features = false, branch = "polkadot-v0.9.13-fix" }
+sp-runtime = { git = "https://github.com/zzm-Zhong/substrate", default-features = false, branch = "polkadot-v0.9.13-fix" }
+
+# Ares suit
+ares-oracle-provider-support = { git = "https://github.com/aresprotocols/ocw-suit", default-features = false, branch = "polkadot-v0.9.13" }
+
+[features]
+default = ["std"]
+std = [
+	'ares-oracle-provider-support/std',
+	'codec/std',
+	'sp-core/std',
+	'frame-executive/std',
+	'frame-system/std',
+	'scale-info/std',
+	'sp-consensus-aura/std',
+	'sp-runtime/std',
+]
