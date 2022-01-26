@@ -92,6 +92,9 @@ pub type SessionHandlers = ();
 pub type SessionKeys = network::part_session::SessionKeys;
 pub type StakerStatus<AccountId> = pallet_staking::StakerStatus<AccountId>;
 pub use ares_oracle_provider_support::crypto::sr25519::AuthorityId as AresId;
+use pallet_balances::NegativeImbalance;
+use sp_std::marker::PhantomData;
+use parachains_common::impls::DealWithFees;
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
 /// the specifics of the runtime. They can then be made to be agnostic over specific formats
@@ -208,14 +211,33 @@ impl frame_system::Config for Runtime {
 	type OnSetCode = cumulus_pallet_parachain_system::ParachainSetCode<Self>;
 }
 
-impl pallet_transaction_payment::Config for Runtime {
-	type OnChargeTransaction =
-	pallet_transaction_payment::CurrencyAdapter<Balances, DealWithFees<Runtime>>;
-	type TransactionByteFee = TransactionByteFee;
-	type WeightToFee = WeightToFee;
-	type FeeMultiplierUpdate = SlowAdjustingFeeUpdate<Self>;
-	type OperationalFeeMultiplier = OperationalFeeMultiplier;
-}
+
+// pub struct DealWithFees<R>(PhantomData<R>);
+// impl<R> OnUnbalanced<NegativeImbalance<R>> for DealWithFees<R>
+// 	where
+// 		R: pallet_balances::Config + pallet_collator_selection::Config,
+// 		AccountIdOf<R>:
+// 		From<polkadot_primitives::v1::AccountId> + Into<polkadot_primitives::v1::AccountId>,
+// 		<R as frame_system::Config>::Event: From<pallet_balances::Event<R>>,
+// {
+// 	fn on_unbalanceds<B>(mut fees_then_tips: impl Iterator<Item = NegativeImbalance<R>>) {
+// 		if let Some(mut fees) = fees_then_tips.next() {
+// 			if let Some(tips) = fees_then_tips.next() {
+// 				tips.merge_into(&mut fees);
+// 			}
+// 			<ToStakingPot<R> as OnUnbalanced<_>>::on_unbalanced(fees);
+// 		}
+// 	}
+// }
+
+// impl pallet_transaction_payment::Config for Runtime {
+// 	type OnChargeTransaction =
+// 	pallet_transaction_payment::CurrencyAdapter<Balances, ()>;
+// 	type TransactionByteFee = TransactionByteFee;
+// 	type WeightToFee = ();
+// 	type FeeMultiplierUpdate = SlowAdjustingFeeUpdate<Self>;
+// 	type OperationalFeeMultiplier = OperationalFeeMultiplier;
+// }
 
 parameter_types! {
 	pub const MinimumPeriod: u64 = SLOT_DURATION / 2;
@@ -258,6 +280,13 @@ impl pallet_balances::Config for Runtime {
 }
 
 // impl pallet_randomness_collective_flip::Config for Runtime {}
+impl pallet_transaction_payment::Config for Runtime {
+	type OnChargeTransaction = pallet_transaction_payment::CurrencyAdapter<Balances, DealWithFees<Runtime>>; // DealWithFees<Runtime>
+	type TransactionByteFee = TransactionByteFee;
+	type WeightToFee = IdentityFee<Balance>;
+	type FeeMultiplierUpdate = ();
+	type OperationalFeeMultiplier = OperationalFeeMultiplier;
+}
 
 impl pallet_sudo::Config for Runtime {
 	type Call = Call;
@@ -672,6 +701,27 @@ impl_runtime_apis! {
 			encoded: Vec<u8>,
 		) -> Option<Vec<(Vec<u8>, KeyTypeId)>> {
 			network::part_session::SessionKeys::decode_into_raw_public_keys(&encoded)
+		}
+	}
+
+	impl frame_system_rpc_runtime_api::AccountNonceApi<Block, AccountId, Index> for Runtime {
+		fn account_nonce(account: AccountId) -> Index {
+			System::account_nonce(account)
+		}
+	}
+
+	impl pallet_transaction_payment_rpc_runtime_api::TransactionPaymentApi<Block, Balance> for Runtime {
+		fn query_info(
+			uxt: <Block as BlockT>::Extrinsic,
+			len: u32,
+		) -> pallet_transaction_payment_rpc_runtime_api::RuntimeDispatchInfo<Balance> {
+			TransactionPayment::query_info(uxt, len)
+		}
+		fn query_fee_details(
+			uxt: <Block as BlockT>::Extrinsic,
+			len: u32,
+		) -> pallet_transaction_payment::FeeDetails<Balance> {
+			TransactionPayment::query_fee_details(uxt, len)
 		}
 	}
 

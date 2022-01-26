@@ -42,6 +42,8 @@ pallet-sudo = { git = "https://github.com/zzm-Zhong/substrate", default-features
 pallet-transaction-payment = { git = "https://github.com/zzm-Zhong/substrate", default-features = false, branch = "polkadot-v0.9.13-fix" }
 pallet-aura = { git = "https://github.com/zzm-Zhong/substrate", default-features = false, branch = "polkadot-v0.9.13-fix" }
 pallet-grandpa = { git = "https://github.com/zzm-Zhong/substrate", default-features = false, branch = "polkadot-v0.9.13-fix" }
+pallet-transaction-payment-rpc-runtime-api = { git = "https://github.com/zzm-Zhong/substrate", default-features = false, branch = "polkadot-v0.9.13-fix" }
+
 
 # Substrate Network
 pallet-session = { git = "https://github.com/zzm-Zhong/substrate", default-features = false, branch = "polkadot-v0.9.13-fix" }
@@ -74,6 +76,7 @@ cumulus-pallet-xcm = { git = "https://github.com/kami1983/ares-cumulus", default
 parachain-info = { git = "https://github.com/kami1983/ares-cumulus", default-features = false, branch = "polkadot-v0.9.13-fix" }
 cumulus-ping = { git = "https://github.com/kami1983/ares-cumulus", default-features = false, branch = "polkadot-v0.9.13-fix" }
 pallet-collator-selection = { git = "https://github.com/kami1983/ares-cumulus", default-features = false, branch = "polkadot-v0.9.13-fix" }
+parachains-common = { git = "https://github.com/kami1983/ares-cumulus", default-features = false, branch = "polkadot-v0.9.13-fix" }
 
 #pallet-getprice = {path = '../pallets/getprice', default-features = false}
 #pallet-price = {path = '../pallets/price', default-features = false}
@@ -143,6 +146,7 @@ std = [
     "pallet-timestamp/std",
     "pallet-sudo/std",
     "pallet-transaction-payment/std",
+    "parachains-common/std",
     "parachain-info/std",
     "cumulus-pallet-aura-ext/std",
     "cumulus-pallet-dmp-queue/std",

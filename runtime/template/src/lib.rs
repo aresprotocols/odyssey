@@ -221,15 +221,22 @@ parameter_types! {
 	pub const OperationalFeeMultiplier: u8 = 5;
 }
 
+// impl pallet_transaction_payment::Config for Runtime {
+// 	type OnChargeTransaction =
+// 	pallet_transaction_payment::CurrencyAdapter<Balances, DealWithFees<Runtime>>;
+// 	type TransactionByteFee = TransactionByteFee;
+// 	type WeightToFee = WeightToFee;
+// 	type FeeMultiplierUpdate = SlowAdjustingFeeUpdate<Self>;
+// 	type OperationalFeeMultiplier = OperationalFeeMultiplier;
+// }
+
 impl pallet_transaction_payment::Config for Runtime {
-	type OnChargeTransaction =
-	pallet_transaction_payment::CurrencyAdapter<Balances, DealWithFees<Runtime>>;
+	type OnChargeTransaction = pallet_transaction_payment::CurrencyAdapter<Balances, ()>;
 	type TransactionByteFee = TransactionByteFee;
 	type WeightToFee = WeightToFee;
 	type FeeMultiplierUpdate = SlowAdjustingFeeUpdate<Self>;
 	type OperationalFeeMultiplier = OperationalFeeMultiplier;
 }
-
 
 impl pallet_randomness_collective_flip::Config for Runtime {}
 

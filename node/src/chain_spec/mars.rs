@@ -8,30 +8,26 @@ use mars_runtime::{
 	GenesisConfig, ParachainInfoConfig, SessionConfig, /*StakingConfig,*/ SudoConfig, SystemConfig,
 	TechnicalCommitteeConfig, VestingConfig, WASM_BINARY,
 };
+use sc_chain_spec::ChainType;
+use polkadot_service::ParaId;
 
 const AMAS_ED: MarsBalance = mars_runtime::constants::currency::EXISTENTIAL_DEPOSIT;
 
 pub type ChainSpec = sc_service::GenericChainSpec<mars_runtime::GenesisConfig, Extensions>;
-pub const PARA_ID: ParaId = ParaId::new(2008);
+pub const PARA_ID_NUM: u32 = 2000;
+pub const PARA_ID: ParaId = ParaId::new(PARA_ID_NUM);
 
 pub fn mars_session_keys(aura: AuraId, ares: AresId) -> SessionKeys {
 	SessionKeys { aura, ares }
 }
 
-pub fn mars_development_config(id: ParaId) -> ChainSpec {
+pub fn mars_development_config() -> ChainSpec {
 	// Give your base currency a unit name and decimal places
 	let mut properties = sc_chain_spec::Properties::new();
 	properties.insert("tokenSymbol".into(), "AMAS".into());
 	properties.insert("tokenDecimals".into(), 12.into());
 	properties.insert("SS58Prefix".into(), SS58Prefix::get().into());
 
-	// SECRET="..."
-	// subkey inspect "$SECRET//1//stash"
-	// subkey inspect "$SECRET//1//controller"
-	// subkey inspect "$SECRET//1//aura"
-	// subkey inspect "$SECRET//2//stash"
-	// subkey inspect "$SECRET//2//controller"
-	// subkey inspect "$SECRET//2//aura"
 	let initial_authorities: Vec<(
 		MarsRuntimeAccountId, // stash
 		MarsRuntimeAccountId, // controller
@@ -56,7 +52,6 @@ pub fn mars_development_config(id: ParaId) -> ChainSpec {
 		hex!["aaf0c45982a423036601dcacc67854b38b854690d8e15bf1543e9a00e660e019"].into(),
 		hex!["c82c3780d981812be804345618d27228680f61bb06a22689dcacf32b9be8815a"].into(),
 		hex!["74a173a22757ddc9790ed388953a1ed8a5933a421858533411b36ebd41d74165"].into(),
-
 	];
 
 	let council_members = endowed_accounts.clone();
@@ -71,7 +66,7 @@ pub fn mars_development_config(id: ParaId) -> ChainSpec {
 				hex!["aaf0c45982a423036601dcacc67854b38b854690d8e15bf1543e9a00e660e019"].into(),
 				endowed_accounts.clone(),
 				council_members.clone(),
-				id,
+				PARA_ID,
 			)
 		},
 		Vec::new(),
@@ -80,7 +75,7 @@ pub fn mars_development_config(id: ParaId) -> ChainSpec {
 		Some(properties),
 		Extensions {
 			relay_chain: "rococo-local".into(), // You MUST set this to the correct network!
-			para_id: id.into(),
+			para_id: PARA_ID_NUM,
 		},
 	)
 }
@@ -108,7 +103,7 @@ fn mars_genesis(
 			code: WASM_BINARY
 				.expect("WASM binary was not build, please build it!")
 				.to_vec(),
-			changes_trie_config: Default::default(),
+			// changes_trie_config: Default::default(),
 		},
 		balances: BalancesConfig {
 			balances: endowed_accounts.iter().cloned().map(|k| (k, endowment)).collect(),
