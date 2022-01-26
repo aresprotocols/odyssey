@@ -1,8 +1,10 @@
 use super::*;
 use mars_runtime;
-use mars_runtime::constants;
+// use mars_runtime::constants;
+use ares_para_common::constants;
 use mars_runtime::Balance as MarsBalance;
-use mars_runtime::{AccountId, AresId, AuraId, SS58Prefix, SessionKeys, Signature, StakerStatus};
+use mars_runtime::{AccountId, SS58Prefix, SessionKeys, Signature, StakerStatus};
+use ares_para_common::{AresId, AuraId};
 use mars_runtime::{
 	AresOracleConfig, BalancesConfig, CollatorSelectionConfig, CouncilConfig, DemocracyConfig, ElectionsConfig,
 	GenesisConfig, ParachainInfoConfig, SessionConfig, /*StakingConfig,*/ SudoConfig, SystemConfig,
@@ -11,7 +13,7 @@ use mars_runtime::{
 use sc_chain_spec::ChainType;
 use polkadot_service::ParaId;
 
-const AMAS_ED: MarsBalance = mars_runtime::constants::currency::EXISTENTIAL_DEPOSIT;
+const AMAS_ED: MarsBalance = ares_para_common::constants::currency::EXISTENTIAL_DEPOSIT;
 
 pub type ChainSpec = sc_service::GenericChainSpec<mars_runtime::GenesisConfig, Extensions>;
 pub const PARA_ID_NUM: u32 = 2008;
@@ -29,8 +31,8 @@ pub fn mars_development_config() -> ChainSpec {
 	properties.insert("SS58Prefix".into(), SS58Prefix::get().into());
 
 	let initial_authorities: Vec<(
-		MarsRuntimeAccountId, // stash
-		MarsRuntimeAccountId, // controller
+		AccountId, // stash
+		AccountId, // controller
 		AuraId,
 		AresId,
 	)> = vec![
@@ -47,7 +49,7 @@ pub fn mars_development_config() -> ChainSpec {
 			hex!["46bd24b721b0252e4c5b933b3c1b53b5179799511594695bf03f06d17b91154e"].unchecked_into(),
 		),
 	];
-	let endowed_accounts: Vec<MarsRuntimeAccountId> = vec![
+	let endowed_accounts: Vec<AccountId> = vec![
 		hex!["70214e02fb2ec155a4c7bb8c122864b3b03f58c4ac59e8d83af7dc29851df657"].into(),
 		hex!["aaf0c45982a423036601dcacc67854b38b854690d8e15bf1543e9a00e660e019"].into(),
 		hex!["c82c3780d981812be804345618d27228680f61bb06a22689dcacf32b9be8815a"].into(),

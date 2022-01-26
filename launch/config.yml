@@ -28,7 +28,7 @@ parachains:
   - image: mars
     chain: # this could be a string like `dev` or a config object
       base: mars
-    id: 2000 # override parachain id
+    id: 2008 # override parachain id
     parachain: true # this is parachain, not parathread
     flags: # CLI flags for this parachain nodes
       - --rpc-methods=unsafe

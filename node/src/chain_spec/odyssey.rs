@@ -29,8 +29,8 @@ pub fn odyssey_development_config() -> ChainSpec {
 	properties.insert("SS58Prefix".into(), SS58Prefix::get().into());
 
 	let initial_authorities: Vec<(
-		OdysseyRuntimeAccountId, // stash
-		OdysseyRuntimeAccountId, // controller
+		AccountId, // stash
+		AccountId, // controller
 		AuraId,
 		AresId,
 	)> = vec![
@@ -47,7 +47,7 @@ pub fn odyssey_development_config() -> ChainSpec {
 			hex!["46bd24b721b0252e4c5b933b3c1b53b5179799511594695bf03f06d17b91154e"].unchecked_into(),
 		),
 	];
-	let endowed_accounts: Vec<OdysseyRuntimeAccountId> = vec![
+	let endowed_accounts: Vec<AccountId> = vec![
 		hex!["70214e02fb2ec155a4c7bb8c122864b3b03f58c4ac59e8d83af7dc29851df657"].into(),
 		hex!["aaf0c45982a423036601dcacc67854b38b854690d8e15bf1543e9a00e660e019"].into(),
 		hex!["c82c3780d981812be804345618d27228680f61bb06a22689dcacf32b9be8815a"].into(),

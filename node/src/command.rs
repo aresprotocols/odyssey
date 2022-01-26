@@ -71,7 +71,7 @@ impl<T: sc_service::ChainSpec + 'static> IdentifyChain for T {
 fn load_spec(id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
 	Ok(match id {
 		"" | "mars-dev" => Box::new(chain_spec::mars::mars_development_config()),
-		"dev" => Box::new(chain_spec::template::development_config()),
+		"dev" => Box::new(chain_spec::mars::mars_development_config()),
 		"mars" => {
 			// Box::new(chain_spec::MarsChainSpec::from_json_bytes(
 			//     &include_bytes!("../res/ares-protocol-mars-2008.json")[..],
@@ -83,7 +83,7 @@ fn load_spec(id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, St
 			if chain_spec.is_mars() {
 				Box::new(chain_spec::mars::ChainSpec::from_json_file(path.into())?)
 			} else if chain_spec.is_dev() {
-				Box::new(chain_spec::template::ChainSpec::from_json_file(path.into())?)
+				Box::new(chain_spec::mars::ChainSpec::from_json_file(path.into())?)
 			}
 			/*else if chain_spec.is_odyssey() {
 				Box::new(chain_spec::OdysseyChainSpec::from_json_file(path.into())?)

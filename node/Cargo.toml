@@ -29,6 +29,7 @@ async-trait = "0.1.42"
 #statemine-runtime = { path = "statemine" }
 #westmint-runtime = { path = "westmint" }
 #statemint-common = { path = "statemint-common" }
+ares-para-common = { path = "../runtime/ares-para-common" }
 mars-runtime = { path = "../runtime/mars" }
 template-runtime = { path = "../runtime/template" }
 odyssey-runtime = { path = "../runtime/odyssey" }
