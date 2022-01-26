@@ -128,8 +128,8 @@ use parachains_common::impls::DealWithFees;
 /// This runtime version.
 #[sp_version::runtime_version]
 pub const VERSION: RuntimeVersion = RuntimeVersion {
-	spec_name: create_runtime_str!("ares-protocol-odyssey"),
-	impl_name: create_runtime_str!("ares-protocol-odyssey"),
+	spec_name: create_runtime_str!("ares-odyssey"),
+	impl_name: create_runtime_str!("ares-odyssey"),
 	authoring_version: 1,
 	spec_version: 116,
 	impl_version: 1,
