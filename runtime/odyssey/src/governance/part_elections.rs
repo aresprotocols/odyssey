@@ -1,5 +1,5 @@
 use super::*;
-use constants::currency::{deposit, AMAS_UNITS};
+use ares_para_common::constants::currency::{deposit, AMAS_UNITS};
 use frame_support::traits::{LockIdentifier, U128CurrencyToVote};
 use pallet_elections_phragmen;
 use part_council::CouncilMaxMembers;

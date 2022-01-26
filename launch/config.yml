@@ -26,9 +26,9 @@ relaychain:
 parachains:
   # Config for first parachain
   - image: mars
-    chain: # this could be a string like `dev` or a config object
-      base: mars
-    id: 2008 # override parachain id
+    chain: # this could be a string like `dev` `mars` `odyssey` or a config object
+      base: odyssey
+    id: 2028 # override parachain id
     parachain: true # this is parachain, not parathread
     flags: # CLI flags for this parachain nodes
       - --rpc-methods=unsafe

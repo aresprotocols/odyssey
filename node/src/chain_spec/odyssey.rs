@@ -1,8 +1,10 @@
 use super::*;
 use odyssey_runtime;
-use odyssey_runtime::constants;
+// use odyssey_runtime::constants;
+use ares_para_common::constants;
 use odyssey_runtime::Balance as OdysseyBalance;
-use odyssey_runtime::{AccountId, AresId, AuraId, SS58Prefix, SessionKeys, Signature, StakerStatus};
+use odyssey_runtime::{AccountId, SS58Prefix, SessionKeys, Signature, StakerStatus};
+use ares_para_common::{AresId, AuraId};
 use odyssey_runtime::{
 	AresOracleConfig, BalancesConfig, CollatorSelectionConfig, CouncilConfig, DemocracyConfig, ElectionsConfig,
 	GenesisConfig, ParachainInfoConfig, SessionConfig, /*StakingConfig,*/ SudoConfig, SystemConfig,
@@ -11,7 +13,7 @@ use odyssey_runtime::{
 use sc_chain_spec::ChainType;
 use polkadot_service::ParaId;
 
-const AMAS_ED: OdysseyBalance = odyssey_runtime::constants::currency::EXISTENTIAL_DEPOSIT;
+const AMAS_ED: OdysseyBalance = ares_para_common::constants::currency::EXISTENTIAL_DEPOSIT;
 
 pub type ChainSpec = sc_service::GenericChainSpec<odyssey_runtime::GenesisConfig, Extensions>;
 pub const PARA_ID_NUM: u32 = 2028;

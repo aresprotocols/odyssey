@@ -12,6 +12,7 @@ log = { version = "0.4.14", default-features = false }
 static_assertions = "1.1.0"
 scale-info = { version = "1.0.0", default-features = false, features = ["derive"] }
 #parachain-info = { path = "../pallets/parachain-info", default-features = false }
+ares-para-common = { path = "../ares-para-common", default-features = false }
 
 # Substrate dependencies
 sp-std = { git = "https://github.com/zzm-Zhong/substrate", default-features = false, branch = "polkadot-v0.9.13-fix" }
@@ -118,6 +119,7 @@ substrate-wasm-builder = { git = "https://github.com/zzm-Zhong/substrate", branc
 [features]
 default = ["std"]
 std = [
+    "ares-para-common/std",
     "codec/std",
     "serde",
     "log/std",

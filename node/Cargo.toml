@@ -31,7 +31,7 @@ async-trait = "0.1.42"
 #statemint-common = { path = "statemint-common" }
 ares-para-common = { path = "../runtime/ares-para-common" }
 mars-runtime = { path = "../runtime/mars" }
-template-runtime = { path = "../runtime/template" }
+#template-runtime = { path = "../runtime/template" }
 odyssey-runtime = { path = "../runtime/odyssey" }
 
 

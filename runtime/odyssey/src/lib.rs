@@ -40,7 +40,8 @@ pub use pallet_timestamp::Call as TimestampCall;
 use pallet_xcm::{EnsureXcm, IsMajorityOfBody, XcmPassthrough};
 use polkadot_parachain::primitives::Sibling;
 use sp_api::impl_runtime_apis;
-pub use sp_consensus_aura::sr25519::AuthorityId as AuraId;
+// pub use sp_consensus_aura::sr25519::AuthorityId as AuraId;
+use ares_para_common::AuraId as AuraId;
 
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 #[cfg(any(feature = "std", test))]
@@ -65,15 +66,19 @@ use xcm_builder::{
 };
 use xcm_executor::XcmExecutor;
 
-pub use constants::{
-	currency::{deposit, CurrencyBalance, AMAS_CENTS, AMAS_MILLI_CENTS, AMAS_MILLI_UNITS, AMAS_UNITS},
-	time::*,
+// pub use constants::{
+// 	currency::{deposit, CurrencyBalance, AMAS_CENTS, AMAS_MILLI_CENTS, AMAS_MILLI_UNITS, AMAS_UNITS},
+// 	time::*,
+// };
+
+pub use ares_para_common:: {
+	constants::currency::{deposit, CurrencyBalance, AMAS_CENTS, AMAS_MILLI_CENTS, AMAS_MILLI_UNITS, AMAS_UNITS},
+	constants::time::*,
 };
+
 // Make the WASM binary available.
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
-
-pub mod constants;
 
 mod governance;
 mod network;
@@ -91,7 +96,8 @@ mod part_oracle_finance;
 pub type SessionHandlers = ();
 pub type SessionKeys = network::part_session::SessionKeys;
 pub type StakerStatus<AccountId> = pallet_staking::StakerStatus<AccountId>;
-pub use ares_oracle_provider_support::crypto::sr25519::AuthorityId as AresId;
+// pub use ares_oracle_provider_support::crypto::sr25519::AuthorityId as AresId;
+use ares_para_common::AresId as AresId;
 use pallet_balances::NegativeImbalance;
 use sp_std::marker::PhantomData;
 use parachains_common::impls::DealWithFees;
@@ -100,18 +106,24 @@ use parachains_common::impls::DealWithFees;
 /// the specifics of the runtime. They can then be made to be agnostic over specific formats
 /// of data.will.del like extrinsics, allowing for them to continue syncing the network through
 /// upgrades to even the core data.will.del structures.
-pub mod opaque {
-	pub use sp_runtime::OpaqueExtrinsic as UncheckedExtrinsic;
+// pub mod opaque {
+// 	pub use sp_runtime::OpaqueExtrinsic as UncheckedExtrinsic;
+//
+// 	use super::*;
+//
+// 	/// Opaque block header type.
+// 	pub type Header = generic::Header<BlockNumber, BlakeTwo256>;
+// 	/// Opaque block type.
+// 	pub type Block = generic::Block<Header, UncheckedExtrinsic>;
+// 	/// Opaque block identifier type.
+// 	pub type BlockId = generic::BlockId<Block>;
+// }
 
-	use super::*;
+// pub use ares_para_common;
+// use ares_para_common::{
+// 	opaque::{Block, Header, BlockId}
+// };
 
-	/// Opaque block header type.
-	pub type Header = generic::Header<BlockNumber, BlakeTwo256>;
-	/// Opaque block type.
-	pub type Block = generic::Block<Header, UncheckedExtrinsic>;
-	/// Opaque block identifier type.
-	pub type BlockId = generic::BlockId<Block>;
-}
 
 /// This runtime version.
 #[sp_version::runtime_version]
@@ -597,33 +609,28 @@ parameter_types! {
 	pub const MinNominatorStk: u128 = 5 * AMAS_UNITS;
 }
 
-// }
-
-/// Alias to 512-bit hash when used in the context of a transaction signature on the chain.
-pub type Signature = sp_runtime::MultiSignature;
-/// Some way of identifying an account on the chain. We intentionally make it equivalent
-/// to the public key of our transaction signing scheme.
-pub type AccountId =
-	<<Signature as sp_runtime::traits::Verify>::Signer as sp_runtime::traits::IdentifyAccount>::AccountId;
-/// Balance of an account.
-// pub type Balance = u128;
-pub type Balance = CurrencyBalance;
-/// Index of a transaction in the chain.
-pub type Index = u32;
-/// A hash of some data.will.del used by the chain.
-pub type Hash = sp_core::H256;
-/// An index to a block.
-pub type BlockNumber = u32;
-/// The address format for describing accounts.
-pub type Address = sp_runtime::MultiAddress<AccountId, ()>;
-/// Block header type as expected by this runtime.
-pub type Header = generic::Header<BlockNumber, BlakeTwo256>;
-/// Block type as expected by this runtime.
-pub type Block = generic::Block<Header, UncheckedExtrinsic>;
-/// A Block signed with a Justification
-pub type SignedBlock = generic::SignedBlock<Block>;
-/// BlockId type as expected by this runtime.
-pub type BlockId = generic::BlockId<Block>;
+// pub type Signature = sp_runtime::MultiSignature;
+pub type Signature = ares_para_common::Signature;
+// 	<<Signature as sp_runtime::traits::Verify>::Signer as sp_runtime::traits::IdentifyAccount>::AccountId;
+pub type AccountId = ares_para_common::AccountId;
+// pub type Balance = CurrencyBalance;
+pub type Balance = ares_para_common::Balance;
+// pub type Index = u32;
+pub type Index = ares_para_common::Index;
+// pub type Hash = sp_core::H256;
+pub type Hash = ares_para_common::Hash;
+// pub type BlockNumber = u32;
+pub type BlockNumber = ares_para_common::BlockNumber;
+// pub type Address = sp_runtime::MultiAddress<AccountId, ()>;
+pub type Address = ares_para_common::Address;
+// pub type Header = generic::Header<BlockNumber, BlakeTwo256>;
+pub type Header = ares_para_common::Header;
+// pub type Block = generic::Block<Header, UncheckedExtrinsic>;
+pub type Block = ares_para_common::Block<Call, SignedExtra>;
+// pub type SignedBlock = generic::SignedBlock<Block>;
+pub type SignedBlock = ares_para_common::SignedBlock<Call, SignedExtra>;
+// pub type BlockId = generic::BlockId<Block>;
+pub type BlockId = ares_para_common::BlockId<Call, SignedExtra>;
 /// The SignedExtension to the basic transaction logic.
 pub type SignedExtra = (
 	frame_system::CheckSpecVersion<Runtime>,
@@ -633,13 +640,17 @@ pub type SignedExtra = (
 	frame_system::CheckWeight<Runtime>,
 	pallet_transaction_payment::ChargeTransactionPayment<Runtime>,
 );
-/// Unchecked extrinsic type as expected by this runtime.
-pub type UncheckedExtrinsic = generic::UncheckedExtrinsic<Address, Call, Signature, SignedExtra>;
-/// Extrinsic type that has already been checked.
-pub type CheckedExtrinsic = generic::CheckedExtrinsic<AccountId, Call, SignedExtra>;
-/// Executive: handles dispatch to the various modules.
-pub type Executive =
-	frame_executive::Executive<Runtime, Block, frame_system::ChainContext<Runtime>, Runtime, AllPallets>;
+// /// Unchecked extrinsic type as expected by this runtime.
+// pub type UncheckedExtrinsic = generic::UncheckedExtrinsic<Address, Call, Signature, SignedExtra>;
+// /// Extrinsic type that has already been checked.
+// pub type CheckedExtrinsic = generic::CheckedExtrinsic<AccountId, Call, SignedExtra>;
+// /// Executive: handles dispatch to the various modules.
+// pub type Executive =
+// 	frame_executive::Executive<Runtime, Block, frame_system::ChainContext<Runtime>, Runtime, AllPallets>;
+
+pub type UncheckedExtrinsic = ares_para_common::UncheckedExtrinsic<Call, SignedExtra>;
+pub type CheckedExtrinsic = ares_para_common::CheckedExtrinsic<Call, SignedExtra>;
+pub type Executive = ares_para_common::Executive<Runtime, AllPallets, Call, SignedExtra>;
 
 impl_runtime_apis! {
 	impl sp_api::Core<Block> for Runtime {

@@ -1,7 +1,7 @@
 use super::*;
 
-use constants::currency::{AMAS_CENTS, AMAS_UNITS};
-use constants::time::MINUTES;
+use ares_para_common::constants::currency::{AMAS_CENTS, AMAS_UNITS};
+use ares_para_common::constants::time::MINUTES;
 use pallet_democracy;
 use part_council::CouncilCollective;
 use part_technical::TechnicalCollective;

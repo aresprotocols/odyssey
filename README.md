@@ -42,3 +42,12 @@ docker volume rm [volume_name]
 docker volume prune
 ```
 
+## Docker build
+```bash
+docker build -t mars .
+```
+
+## Docker output
+```bash
+docker save -o mars.0933.tar mars 
+```

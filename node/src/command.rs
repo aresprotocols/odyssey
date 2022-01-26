@@ -77,18 +77,22 @@ fn load_spec(id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, St
 			//     &include_bytes!("../res/ares-protocol-mars-2008.json")[..],
 			// )?)
 			Box::new(chain_spec::mars::mars_development_config())
-		}
+		},
+		"odyssey" => {
+			// Box::new(chain_spec::MarsChainSpec::from_json_bytes(
+			//     &include_bytes!("../res/ares-protocol-mars-2008.json")[..],
+			// )?)
+			Box::new(chain_spec::odyssey::odyssey_development_config())
+		},
 		path => {
 			let chain_spec = chain_spec::mars::ChainSpec::from_json_file(path.into())?;
 			if chain_spec.is_mars() {
 				Box::new(chain_spec::mars::ChainSpec::from_json_file(path.into())?)
 			} else if chain_spec.is_dev() {
 				Box::new(chain_spec::mars::ChainSpec::from_json_file(path.into())?)
-			}
-			/*else if chain_spec.is_odyssey() {
-				Box::new(chain_spec::OdysseyChainSpec::from_json_file(path.into())?)
-			}*/
-			else {
+			} else if chain_spec.is_odyssey() {
+				Box::new(chain_spec::odyssey::ChainSpec::from_json_file(path.into())?)
+			} else {
 				Box::new(chain_spec)
 			}
 		}
@@ -134,7 +138,7 @@ impl SubstrateCli for Cli {
 		if chain_spec.is_mars() {
 			&mars_runtime::VERSION
 		} else if chain_spec.is_dev() {
-			&template_runtime::VERSION
+			&mars_runtime::VERSION
 		} else if chain_spec.is_odyssey() {
 			// TODO fix
 			// &odyssey_runtime::VERSION
@@ -236,9 +240,9 @@ macro_rules! construct_async_run {
 			})
 		} else if runner.config().chain_spec.is_dev(){
 			runner.async_run(|$config| {
-					let $components = new_partial::<template_runtime::RuntimeApi, service::template::TemplateRuntimeExecutor, _>(
+					let $components = new_partial::<mars_runtime::RuntimeApi, service::mars::MarsRuntimeExecutor, _>(
 					&$config,
-					crate::service::template::parachain_build_import_queue,
+					crate::service::mars::parachain_build_import_queue,
 				)?;
 				let task_manager = $components.task_manager;
 				{ $( $code )* }.map(|v| (v, task_manager))
@@ -437,7 +441,7 @@ pub fn run() -> Result<()> {
 						.map(|r| r.0)
 						.map_err(Into::into)
 				} else if config.chain_spec.is_dev() {
-					crate::service::template::start_parachain_node(config, polkadot_config, id)
+					crate::service::mars::start_parachain_node(config, polkadot_config, id, get_warehouse_params(cli))
 						.await
 						.map(|r| r.0)
 						.map_err(Into::into)
