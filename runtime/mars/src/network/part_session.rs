@@ -22,7 +22,7 @@ impl pallet_session::Config for Runtime {
     type ValidatorIdOf = pallet_collator_selection::IdentityCollator;
     type ShouldEndSession = pallet_session::PeriodicSessions<Period, Offset>;
     type NextSessionRotation = pallet_session::PeriodicSessions<Period, Offset>;
-    type SessionManager = CollatorSelection;
+    type SessionManager = OracleFinance;//CollatorSelection;
     // Essentially just Aura, but lets be pedantic.
     // type SessionHandler = <SessionKeys as sp_runtime::traits::OpaqueKeys>::KeyTypeIdProviders;
     type SessionHandler = <SessionKeys as sp_runtime::traits::OpaqueKeys>::KeyTypeIdProviders;

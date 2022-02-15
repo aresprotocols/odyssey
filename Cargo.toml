@@ -10,8 +10,8 @@ members = [
 	"runtime/odyssey",
 ]
 
-#[patch."https://github.com/zzm-Zhong/substrate"]
-#pallet-session = { git = "https://github.com/aresprotocols/ocw-suit", branch = "polkadot-v0.9.15" }
+[patch."https://github.com/zzm-Zhong/substrate"]
+pallet-session = { git = "https://github.com/aresprotocols/ocw-suit", branch = "polkadot-v0.9.15" }
 
 [patch."https://github.com/paritytech/substrate"]
 sp-std = { git = "https://github.com/zzm-Zhong/substrate", branch = "polkadot-v0.9.15-fix" }
@@ -19,7 +19,7 @@ sc-consensus-slots = { git = "https://github.com/zzm-Zhong/substrate", branch = 
 sc-executor-wasmtime = { git = "https://github.com/zzm-Zhong/substrate", branch = "polkadot-v0.9.15-fix" }
 pallet-transaction-payment-rpc = { git = "https://github.com/zzm-Zhong/substrate", branch = "polkadot-v0.9.15-fix" }
 pallet-offences = { git = "https://github.com/zzm-Zhong/substrate", branch = "polkadot-v0.9.15-fix" }
-pallet-session = { git = "https://github.com/zzm-Zhong/substrate", branch = "polkadot-v0.9.15-fix" }
+#pallet-session = { git = "https://github.com/zzm-Zhong/substrate", branch = "polkadot-v0.9.15-fix" }
 pallet-bounties = { git = "https://github.com/zzm-Zhong/substrate", branch = "polkadot-v0.9.15-fix" }
 pallet-tips = { git = "https://github.com/zzm-Zhong/substrate", branch = "polkadot-v0.9.15-fix" }
 pallet-treasury = { git = "https://github.com/zzm-Zhong/substrate", branch = "polkadot-v0.9.15-fix" }
