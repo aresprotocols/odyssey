@@ -26,7 +26,7 @@ pub fn odyssey_session_keys(aura: AuraId, ares: AresId) -> SessionKeys {
 pub fn odyssey_development_config() -> ChainSpec {
 	// Give your base currency a unit name and decimal places
 	let mut properties = sc_chain_spec::Properties::new();
-	properties.insert("tokenSymbol".into(), "AMAS".into());
+	properties.insert("tokenSymbol".into(), "ARES".into());
 	properties.insert("tokenDecimals".into(), 12.into());
 	properties.insert("SS58Prefix".into(), SS58Prefix::get().into());
 
@@ -77,6 +77,65 @@ pub fn odyssey_development_config() -> ChainSpec {
 		Some(properties),
 		Extensions {
 			relay_chain: "rococo-local".into(), // You MUST set this to the correct network!
+			para_id: PARA_ID_NUM,
+		},
+	)
+}
+
+pub fn odyssey_config() -> ChainSpec {
+	// Give your base currency a unit name and decimal places
+	let mut properties = sc_chain_spec::Properties::new();
+	properties.insert("tokenSymbol".into(), "ARES".into());
+	properties.insert("tokenDecimals".into(), 12.into());
+	properties.insert("SS58Prefix".into(), SS58Prefix::get().into());
+
+	let initial_authorities: Vec<(
+		AccountId, // stash
+		AccountId, // controller
+		AuraId,
+		AresId,
+	)> = vec![
+		(
+			hex!["906f4cc9ff46e6ff97c2ccc78f47a49b71d1c50af58bd8a41c53c94baeb20769"].into(),
+			hex!["2e28518cd195e82bdc7b22091cf082e4af46500e29627836e59761c1da348b22"].into(),
+			hex!["08ecdc14e2dd427724c60c6879a1aeade21d9708c30c4477f679dde971cb1378"].unchecked_into(),
+			hex!["08ecdc14e2dd427724c60c6879a1aeade21d9708c30c4477f679dde971cb1378"].unchecked_into(),
+		),
+		(
+			hex!["069a246d4d483a7cf71d6e04e89562717f815cf2790fbd834210269d124a7a4b"].into(),
+			hex!["7ebfba49d232ec8a0bf2ad829ee0ad42e18bd108381b3e953cfa74d04de7200c"].into(),
+			hex!["46bd24b721b0252e4c5b933b3c1b53b5179799511594695bf03f06d17b91154e"].unchecked_into(),
+			hex!["46bd24b721b0252e4c5b933b3c1b53b5179799511594695bf03f06d17b91154e"].unchecked_into(),
+		),
+	];
+	let endowed_accounts: Vec<AccountId> = vec![
+		hex!["906f4cc9ff46e6ff97c2ccc78f47a49b71d1c50af58bd8a41c53c94baeb20769"].into(),
+		hex!["2e28518cd195e82bdc7b22091cf082e4af46500e29627836e59761c1da348b22"].into(),
+		hex!["c82c3780d981812be804345618d27228680f61bb06a22689dcacf32b9be8815a"].into(),
+		hex!["74a173a22757ddc9790ed388953a1ed8a5933a421858533411b36ebd41d74165"].into(),
+	];
+
+	let council_members = endowed_accounts.clone();
+	ChainSpec::from_genesis(
+		"Odyssey",
+		"odyssey_testnet",
+		ChainType::Live,
+		move || {
+			odyssey_genesis(
+				initial_authorities.clone(),
+				vec![],
+				hex!["906f4cc9ff46e6ff97c2ccc78f47a49b71d1c50af58bd8a41c53c94baeb20769"].into(),
+				endowed_accounts.clone(),
+				council_members.clone(),
+				PARA_ID,
+			)
+		},
+		Vec::new(),
+		None,
+		None,
+		Some(properties),
+		Extensions {
+			relay_chain: "polkadot".into(), // You MUST set this to the correct network!
 			para_id: PARA_ID_NUM,
 		},
 	)

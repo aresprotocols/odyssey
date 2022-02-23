@@ -76,13 +76,16 @@ fn load_spec(id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, St
 			// Box::new(chain_spec::MarsChainSpec::from_json_bytes(
 			//     &include_bytes!("../res/ares-mars-2008.json")[..],
 			// )?)
-			Box::new(chain_spec::mars::mars_development_config())
+			Box::new(chain_spec::mars::mars_config())
+		},
+		"odyssey-dev" => {
+			Box::new(chain_spec::odyssey::odyssey_development_config())
 		},
 		"odyssey" => {
 			// Box::new(chain_spec::MarsChainSpec::from_json_bytes(
 			//     &include_bytes!("../res/ares-mars-2008.json")[..],
 			// )?)
-			Box::new(chain_spec::odyssey::odyssey_development_config())
+			Box::new(chain_spec::odyssey::odyssey_config())
 		},
 		path => {
 			let chain_spec = chain_spec::mars::ChainSpec::from_json_file(path.into())?;
