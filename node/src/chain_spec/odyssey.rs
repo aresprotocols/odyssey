@@ -74,6 +74,7 @@ pub fn odyssey_development_config() -> ChainSpec {
 		Vec::new(),
 		None,
 		None,
+		None,
 		Some(properties),
 		Extensions {
 			relay_chain: "rococo-local".into(), // You MUST set this to the correct network!
@@ -129,7 +130,7 @@ fn odyssey_genesis(
 		// of this.
 		aura: Default::default(),
 		aura_ext: Default::default(),
-		sudo: SudoConfig { key: root_key.clone() },
+		sudo: SudoConfig { key: Some(root_key.clone()) },
 		// staking: StakingConfig {
 		// 	validator_count: initial_authorities.len() as u32,
 		// 	minimum_validator_count: initial_authorities.len() as u32,

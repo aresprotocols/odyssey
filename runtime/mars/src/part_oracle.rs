@@ -4,11 +4,11 @@ pub use ares_oracle::LOCAL_STORAGE_PRICE_REQUEST_DOMAIN;
 use ares_oracle_provider_support::crypto::sr25519::AuthorityId as AresId;
 use frame_support::sp_runtime::app_crypto::sp_core::u32_trait::{_1, _2};
 use frame_support::sp_std::marker::PhantomData;
+use frame_support::traits::EnsureOneOf;
 use staking_extend::IStakingNpos;
 use governance::part_technical::TechnicalCollective;
 
 pub type EnsureRootOrHalfTechnicalCollective = EnsureOneOf<
-    AccountId,
     EnsureRoot<AccountId>,
     pallet_collective::EnsureProportionAtLeast<_1, _2, AccountId, TechnicalCollective>,
 >;
