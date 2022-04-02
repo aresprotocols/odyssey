@@ -74,6 +74,7 @@ pub fn mars_development_config() -> ChainSpec {
 		Vec::new(),
 		None,
 		None,
+		None,
 		Some(properties),
 		Extensions {
 			relay_chain: "rococo-local".into(), // You MUST set this to the correct network!
@@ -169,7 +170,7 @@ fn mars_genesis(
 		collator_selection: CollatorSelectionConfig {
 			invulnerables: initial_authorities.iter().map(|x| x.0.clone()).collect(),
 			candidacy_bond: AMAS_ED,
-			..Default::default()
+			desired_candidates: 10u32,
 		},
 		parachain_system: Default::default(),
 		session: SessionConfig {
@@ -188,7 +189,7 @@ fn mars_genesis(
 		// of this.
 		aura: Default::default(),
 		aura_ext: Default::default(),
-		sudo: SudoConfig { key: root_key.clone() },
+		sudo: SudoConfig { key: Some(root_key.clone()) },
 		// staking: StakingConfig {
 		// 	validator_count: initial_authorities.len() as u32,
 		// 	minimum_validator_count: initial_authorities.len() as u32,

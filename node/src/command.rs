@@ -30,10 +30,15 @@ use sc_cli::{
 	ChainSpec, CliConfiguration, DefaultConfigurationValues, ImportParams, KeystoreParams, NetworkParams, Result,
 	RuntimeVersion, SharedParams, SubstrateCli,
 };
-use sc_service::config::{BasePath, PrometheusConfig};
+use sc_service::{
+	config::{BasePath, PrometheusConfig},
+	TaskManager,
+};
+
 use sp_core::hexdisplay::HexDisplay;
 use sp_runtime::traits::Block as BlockT;
 use std::{io::Write, net::SocketAddr};
+use crate::service::odyssey::OdysseyRuntimeExecutor;
 
 // default to the Statemint/Statemine/Westmint id
 const DEFAULT_PARA_ID: u32 = 1000;
@@ -73,22 +78,13 @@ fn load_spec(id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, St
 		"" | "mars-dev" => Box::new(chain_spec::mars::mars_development_config()),
 		"dev" => Box::new(chain_spec::mars::mars_development_config()),
 		"mars" => {
-			// Box::new(chain_spec::MarsChainSpec::from_json_bytes(
-			//     &include_bytes!("../res/ares-mars-2008.json")[..],
-			// )?)
-			Box::new(chain_spec::mars::mars_config())
+			Box::new(chain_spec::mars::mars_development_config())
 		},
-		"odyssey-dev" => {
+		"" | "odyssey" => {
 			Box::new(chain_spec::odyssey::odyssey_development_config())
 		},
-		"odyssey" => {
-			// Box::new(chain_spec::MarsChainSpec::from_json_bytes(
-			//     &include_bytes!("../res/ares-mars-2008.json")[..],
-			// )?)
-			Box::new(chain_spec::odyssey::odyssey_config())
-		},
 		path => {
-			let chain_spec = chain_spec::mars::ChainSpec::from_json_file(path.into())?;
+			let chain_spec = chain_spec::odyssey::ChainSpec::from_json_file(path.into())?;
 			if chain_spec.is_mars() {
 				Box::new(chain_spec::mars::ChainSpec::from_json_file(path.into())?)
 			} else if chain_spec.is_dev() {
@@ -98,6 +94,7 @@ fn load_spec(id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, St
 			} else {
 				Box::new(chain_spec)
 			}
+
 		}
 	})
 }
@@ -204,34 +201,7 @@ fn extract_genesis_wasm(chain_spec: &Box<dyn sc_service::ChainSpec>) -> Result<V
 macro_rules! construct_async_run {
 	(|$components:ident, $cli:ident, $cmd:ident, $config:ident| $( $code:tt )* ) => {{
 		let runner = $cli.create_runner($cmd)?;
-		/*if runner.config().chain_spec.is_westmint() {
-			runner.async_run(|$config| {
-				let $components = new_partial::<westmint_runtime::RuntimeApi, WestmintRuntimeExecutor, _>(
-					&$config,
-					crate::service::statemint_build_import_queue,
-				)?;
-				let task_manager = $components.task_manager;
-				{ $( $code )* }.map(|v| (v, task_manager))
-			})
-		} else if runner.config().chain_spec.is_statemine() {
-			runner.async_run(|$config| {
-				let $components = new_partial::<statemine_runtime::RuntimeApi, StatemineRuntimeExecutor, _>(
-					&$config,
-					crate::service::statemint_build_import_queue,
-				)?;
-				let task_manager = $components.task_manager;
-				{ $( $code )* }.map(|v| (v, task_manager))
-			})
-		} else if runner.config().chain_spec.is_statemint() {
-			runner.async_run(|$config| {
-				let $components = new_partial::<statemint_runtime::RuntimeApi, StatemintRuntimeExecutor, _>(
-					&$config,
-					crate::service::statemint_build_import_queue,
-				)?;
-				let task_manager = $components.task_manager;
-				{ $( $code )* }.map(|v| (v, task_manager))
-			})
-		} else */
+
 		if runner.config().chain_spec.is_mars() {
 			runner.async_run(|$config| {
 				let $components = new_partial::<mars_runtime::RuntimeApi, service::mars::MarsRuntimeExecutor, _>(
@@ -241,7 +211,16 @@ macro_rules! construct_async_run {
 				let task_manager = $components.task_manager;
 				{ $( $code )* }.map(|v| (v, task_manager))
 			})
-		} else if runner.config().chain_spec.is_dev(){
+		} else  if runner.config().chain_spec.is_odyssey() {
+			runner.async_run(|$config| {
+					let $components = new_partial::<odyssey_runtime::RuntimeApi, service::odyssey::OdysseyRuntimeExecutor, _>(
+					&$config,
+					crate::service::odyssey::parachain_build_import_queue,
+				)?;
+				let task_manager = $components.task_manager;
+				{ $( $code )* }.map(|v| (v, task_manager))
+			})
+		} else {
 			runner.async_run(|$config| {
 					let $components = new_partial::<mars_runtime::RuntimeApi, service::mars::MarsRuntimeExecutor, _>(
 					&$config,
@@ -250,39 +229,7 @@ macro_rules! construct_async_run {
 				let task_manager = $components.task_manager;
 				{ $( $code )* }.map(|v| (v, task_manager))
 			})
-		} else {
-			runner.async_run(|$config| {
-				let $components = new_partial::<
-					mars_runtime::RuntimeApi,
-					service::mars::MarsRuntimeExecutor,
-					_
-				>(
-					&$config,
-					crate::service::mars::parachain_build_import_queue,
-				)?;
-				let task_manager = $components.task_manager;
-				{ $( $code )* }.map(|v| (v, task_manager))
-			})
 		}
-		/*else if runner.config().chain_spec.is_odyssey() {
-			runner.async_run(|$config| {
-				let $components = new_partial::<odyssey_runtime::RuntimeApi, StatemintRuntimeExecutor, _>(
-					&$config,
-					crate::service::statemint_build_import_queue,
-				)?;
-				let task_manager = $components.task_manager;
-				{ $( $code )* }.map(|v| (v, task_manager))
-			})
-		} else if runner.config().chain_spec.is_shell() {
-			runner.async_run(|$config| {
-				let $components = new_partial::<shell_runtime::RuntimeApi, ShellRuntimeExecutor, _>(
-					&$config,
-					crate::service::shell_build_import_queue,
-				)?;
-				let task_manager = $components.task_manager;
-				{ $( $code )* }.map(|v| (v, task_manager))
-			})
-		} */
 
 	}}
 }
@@ -339,9 +286,14 @@ pub fn run() -> Result<()> {
 			builder.with_profiling(sc_tracing::TracingReceiver::Log, "");
 			let _ = builder.init();
 
-			let block: crate::service::Block = generate_genesis_block(&load_spec(
-				&params.chain.clone().unwrap_or_default(),
-			)?)?;
+			// let block: crate::service::Block = generate_genesis_block(&load_spec(
+			// 	&params.chain.clone().unwrap_or_default(),
+			// )?)?;
+
+			let spec = load_spec(&params.chain.clone().unwrap_or_default())?;
+			let state_version = Cli::native_runtime_version(&spec).state_version();
+			let block: crate::service::Block = generate_genesis_block(&spec, state_version)?;
+
 			let raw_header = block.header().encode();
 			let output_buf = if params.raw {
 				raw_header
@@ -403,6 +355,26 @@ pub fn run() -> Result<()> {
 					.into())
 			}
 		}
+		Some(Subcommand::TryRuntime(cmd)) => {
+			if cfg!(feature = "try-runtime") {
+				// grab the task manager.
+				let runner = cli.create_runner(cmd)?;
+				let registry = &runner.config().prometheus_config.as_ref().map(|cfg| &cfg.registry);
+				let task_manager =
+					TaskManager::new(runner.config().tokio_handle.clone(), *registry)
+						.map_err(|e| format!("Error: {:?}", e))?;
+
+				if runner.config().chain_spec.is_odyssey() {
+					runner.async_run(|config| {
+						Ok((cmd.run::<Block, OdysseyRuntimeExecutor>(config), task_manager))
+					})
+				} else {
+					Err("Chain doesn't support try-runtime".into())
+				}
+			} else {
+				Err("Try-runtime must be enabled by `--features try-runtime`.".into())
+			}
+		},
 		None => {
 			let runner = cli.create_runner(&cli.run.normalize())?;
 			runner.run_node_until_exit(|config| async move {
@@ -422,8 +394,15 @@ pub fn run() -> Result<()> {
 				let id = ParaId::from(para_id);
 				let parachain_account = AccountIdConversion::<polkadot_primitives::v0::AccountId>::into_account(&id);
 
+				// let block: crate::service::Block =
+				// 	generate_genesis_block(&config.chain_spec).map_err(|e| format!("{:?}", e))?;
+
+				let state_version =
+					RelayChainCli::native_runtime_version(&config.chain_spec).state_version();
+
 				let block: crate::service::Block =
-					generate_genesis_block(&config.chain_spec).map_err(|e| format!("{:?}", e))?;
+					generate_genesis_block(&config.chain_spec, state_version)
+						.map_err(|e| format!("{:?}", e))?;
 
 				let genesis_state = format!("0x{:?}", HexDisplay::from(&block.header().encode()));
 
@@ -448,23 +427,12 @@ pub fn run() -> Result<()> {
 						.await
 						.map(|r| r.0)
 						.map_err(Into::into)
-				}
-				/*else if config.chain_spec.is_odyssey() {
-					crate::service::start_ares_node::<odyssey_runtime::RuntimeApi, OdysseyRuntimeExecutor>(
-						config,
-						polkadot_config,
-						id,
-						get_warehouse_params(cli)
-					)
+				} else if config.chain_spec.is_odyssey() {
+					crate::service::odyssey::start_parachain_node(config, polkadot_config, id, get_warehouse_params(cli))
 						.await
 						.map(|r| r.0)
 						.map_err(Into::into)
-				} */
-				else {
-					// crate::service::start_rococo_parachain_node(config, polkadot_config, id)
-					// 	.await
-					// 	.map(|r| r.0)
-					// 	.map_err(Into::into)
+				}  else {
 					crate::service::mars::start_parachain_node(config, polkadot_config, id, get_warehouse_params(cli))
 						.await
 						.map(|r| r.0)
@@ -472,6 +440,7 @@ pub fn run() -> Result<()> {
 				}
 			})
 		}
+
 	}
 }
 
@@ -543,13 +512,35 @@ impl CliConfiguration<Self> for RelayChainCli {
 		self.base.base.rpc_ws(default_listen_port)
 	}
 
-	fn prometheus_config(&self, default_listen_port: u16) -> Result<Option<PrometheusConfig>> {
-		self.base.base.prometheus_config(default_listen_port)
+	// fn prometheus_config(&self, default_listen_port: u16) -> Result<Option<PrometheusConfig>> {
+	// 	self.base.base.prometheus_config(default_listen_port)
+	// }
+
+	fn prometheus_config(
+		&self,
+		default_listen_port: u16,
+		chain_spec: &Box<dyn ChainSpec>,
+	) -> Result<Option<PrometheusConfig>> {
+		self.base.base.prometheus_config(default_listen_port, chain_spec)
 	}
 
-	fn init<C: SubstrateCli>(&self) -> Result<()> {
+	// fn init<C: SubstrateCli>(&self) -> Result<()> {
+	// 	unreachable!("PolkadotCli is never initialized; qed");
+	// }
+
+	fn init<F>(
+		&self,
+		_support_url: &String,
+		_impl_version: &String,
+		_logger_hook: F,
+		_config: &sc_service::Configuration,
+	) -> Result<()>
+		where
+			F: FnOnce(&mut sc_cli::LoggerBuilder, &sc_service::Configuration),
+	{
 		unreachable!("PolkadotCli is never initialized; qed");
 	}
+
 
 	fn chain_id(&self, is_dev: bool) -> Result<String> {
 		let chain_id = self.base.base.chain_id(is_dev)?;

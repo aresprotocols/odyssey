@@ -8,7 +8,9 @@ use part_technical::TechnicalCollective;
 
 use sp_core::u32_trait::{_1, _2, _3, _4};
 
-use frame_system::{EnsureOneOf, EnsureRoot};
+// use frame_system::{EnsureOneOf, EnsureRoot};
+use frame_support::traits::EnsureOneOf;
+use frame_system::{EnsureRoot};
 
 parameter_types! {
     pub const LaunchPeriod: BlockNumber = 28 * 24 * 60 * MINUTES;
@@ -57,7 +59,6 @@ impl pallet_democracy::Config for Runtime {
     // To cancel a proposal before it has been passed, the technical committee must be unanimous or
     // Root must agree.
     type CancelProposalOrigin = EnsureOneOf<
-        AccountId,
         EnsureRoot<AccountId>,
         pallet_collective::EnsureProportionAtLeast<_1, _1, AccountId, TechnicalCollective>,
     >;
