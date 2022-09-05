@@ -87,10 +87,11 @@ pub mod xcm_config;
 // // mod part_getprice;
 
 mod part_challenge;
-mod part_member_extend;
+// mod part_member_extend;
 mod part_offchain;
 pub mod part_oracle;
 mod part_oracle_finance;
+mod part_manual_bridge;
 
 // mod part_staking_extend;
 pub type SessionHandlers = ();
@@ -554,7 +555,7 @@ construct_runtime! {
 
 		// Governance
 		Democracy: pallet_democracy::{Pallet, Call, Storage, Config<T>, Event<T>},
-		Council: pallet_ares_collective::<Instance1>::{Pallet, Call, Storage, Origin<T>, Event<T>, Config<T>},
+		Council: pallet_collective::<Instance1>::{Pallet, Call, Storage, Origin<T>, Event<T>, Config<T>},
 		TechnicalCommittee: pallet_collective::<Instance2>::{Pallet, Call, Storage, Origin<T>, Event<T>, Config<T>},
 		Treasury: pallet_treasury::{Pallet, Call, Storage, Config, Event<T>},
 		Bounties: pallet_bounties::{Pallet, Call, Storage, Event<T>},
@@ -564,7 +565,7 @@ construct_runtime! {
 		// Staking: pallet_staking::{Pallet, Call, Config<T>, Storage, Event<T>},
 
 		// Ares Suit
-		AresChallenge: pallet_ares_challenge::{Pallet, Call, Storage, Event<T>},
+		AresChallenge: pallet_ares_challenge::<Instance1>::{Pallet, Call, Storage, Event<T>},
 		// MemberExtend: member_extend::{Pallet},
 		OracleFinance: oracle_finance::{Pallet, Call, Storage, Event<T>},
 		AresOracle: ares_oracle::{Pallet, Call, Storage, Event<T>, ValidateUnsigned, Config<T>},
@@ -587,6 +588,8 @@ construct_runtime! {
 
 		Assets: pallet_assets::{Pallet, Call, Storage, Event<T>},
 		// Uniques: pallet_uniques::{Pallet, Call, Storage, Event<T>},
+		Identity: pallet_identity::{Pallet, Call, Storage, Event<T>},
+		ManualBridge: manual_bridge::{Pallet, Call, Storage, Event<T>, Config<T>},
 
 	}
 }

@@ -2,7 +2,7 @@
 use super::*;
 
 use odyssey_runtime::{api::dispatch, native_version, RuntimeApi};
-use odyssey_runtime::part_oracle::LOCAL_STORAGE_PRICE_REQUEST_DOMAIN;
+use ares_oracle_provider_support::LOCAL_STORAGE_PRICE_REQUEST_DOMAIN;
 use log;
 use sc_executor::NativeElseWasmExecutor;
 use cumulus_client_consensus_aura::AuraConsensus;

@@ -1,0 +1,22 @@
+RUST_LOG=sc_basic_authorship=trace,cumulus-consensus=trace,cumulus-collator=trace,collator_protocol=trace,collation_generation=trace,aura=debug \
+./target/release/polkadot-collator \
+--base-path=/tmp/parachain/mars/data-10 \
+--chain=mars-chain-spec.json \
+--ws-external \
+--rpc-external \
+--rpc-cors=all \
+--name=parachain-2008-0 \
+--collator \
+--rpc-methods=unsafe \
+--force-authoring \
+--execution=wasm \
+--warehouse=http://api.aresprotocol.io \
+--node-key=f4cad3d3e20dc2f952634c0111fcabde3493ae53d7cd01a032dd10e14d93dffb \
+--listen-addr=/ip4/0.0.0.0/tcp/30336 \
+--ws-port 8846 \
+--rpc-port 8836 \
+-- \
+--chain=/Users/kami-m1/work-files/coding/git-files/ke-fan/ares-odyssey/rococo-local-kami-raw.json \
+--execution=wasm \
+--bootnodes=/ip4/45.77.30.9/tcp/30633/p2p/12D3KooWKzDxQikr9YEbdXbkG1xmdcoenkRezfN2Do43dEaKjxAu \
+--bootnodes=/ip4/45.77.30.9/tcp/30634/p2p/12D3KooWMw8SxpEYNnYimDSyWNypZ3JvNsgjAjD24m4ERUCSpoHq

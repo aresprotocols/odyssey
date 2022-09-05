@@ -39,8 +39,8 @@ impl PrivilegeCmp<OriginCaller> for OriginPrivilegeCmp {
             (OriginCaller::system(frame_system::RawOrigin::Root), _) => Some(Ordering::Greater),
             // Check which one has more yes votes.
             (
-                OriginCaller::Council(pallet_ares_collective::RawOrigin::Members(l_yes_votes, l_count)),
-                OriginCaller::Council(pallet_ares_collective::RawOrigin::Members(r_yes_votes, r_count)),
+                OriginCaller::Council(pallet_collective::RawOrigin::Members(l_yes_votes, l_count)),
+                OriginCaller::Council(pallet_collective::RawOrigin::Members(r_yes_votes, r_count)),
             ) => Some((l_yes_votes * r_count).cmp(&(r_yes_votes * l_count))),
             // For every other origin we don't care, as they are not used for `ScheduleOrigin`.
             _ => None,

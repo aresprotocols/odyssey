@@ -7,11 +7,12 @@ use odyssey_runtime::{AccountId, SS58Prefix, SessionKeys, Signature, StakerStatu
 use ares_para_common::{AresId, AuraId};
 use odyssey_runtime::{
 	AresOracleConfig, BalancesConfig, CollatorSelectionConfig, CouncilConfig, DemocracyConfig, ElectionsConfig,
-	GenesisConfig, ParachainInfoConfig, SessionConfig, /*StakingConfig,*/ SudoConfig, SystemConfig,
+	GenesisConfig, ParachainInfoConfig, SessionConfig, /*StakingConfig,*/ SudoConfig, SystemConfig, ManualBridgeConfig,
 	TechnicalCommitteeConfig, VestingConfig, WASM_BINARY,
 };
 use sc_chain_spec::ChainType;
 use polkadot_service::ParaId;
+use sp_runtime::Percent;
 
 const AMAS_ED: OdysseyBalance = ares_para_common::constants::currency::EXISTENTIAL_DEPOSIT;
 
@@ -27,7 +28,7 @@ pub fn odyssey_development_config() -> ChainSpec {
 	// Give your base currency a unit name and decimal places
 	let mut properties = sc_chain_spec::Properties::new();
 	properties.insert("tokenSymbol".into(), "ARES".into());
-	properties.insert("tokenDecimals".into(), 12.into());
+	properties.insert("tokenDecimals".into(), serde_json::Value::Number(12u32.into()));
 	properties.insert("SS58Prefix".into(), SS58Prefix::get().into());
 
 	let initial_authorities: Vec<(
@@ -65,6 +66,11 @@ pub fn odyssey_development_config() -> ChainSpec {
 			odyssey_genesis(
 				initial_authorities.clone(),
 				vec![],
+				(
+					hex!["aaf0c45982a423036601dcacc67854b38b854690d8e15bf1543e9a00e660e019"].into(),
+					hex!["aaf0c45982a423036601dcacc67854b38b854690d8e15bf1543e9a00e660e019"].into(),
+					1000 * constants::currency::AMAS_UNITS
+				),
 				hex!["aaf0c45982a423036601dcacc67854b38b854690d8e15bf1543e9a00e660e019"].into(),
 				endowed_accounts.clone(),
 				council_members.clone(),
@@ -87,7 +93,7 @@ pub fn odyssey_config() -> ChainSpec {
 	// Give your base currency a unit name and decimal places
 	let mut properties = sc_chain_spec::Properties::new();
 	properties.insert("tokenSymbol".into(), "ARES".into());
-	properties.insert("tokenDecimals".into(), 12.into());
+	properties.insert("tokenDecimals".into(), serde_json::Value::Number(12u32.into()));
 	properties.insert("SS58Prefix".into(), SS58Prefix::get().into());
 
 	let initial_authorities: Vec<(
@@ -125,6 +131,11 @@ pub fn odyssey_config() -> ChainSpec {
 			odyssey_genesis(
 				initial_authorities.clone(),
 				vec![],
+				(
+					hex!["906f4cc9ff46e6ff97c2ccc78f47a49b71d1c50af58bd8a41c53c94baeb20769"].into(),
+					hex!["906f4cc9ff46e6ff97c2ccc78f47a49b71d1c50af58bd8a41c53c94baeb20769"].into(),
+					1000 * constants::currency::AMAS_UNITS
+				),
 				hex!["906f4cc9ff46e6ff97c2ccc78f47a49b71d1c50af58bd8a41c53c94baeb20769"].into(),
 				endowed_accounts.clone(),
 				council_members.clone(),
@@ -132,6 +143,7 @@ pub fn odyssey_config() -> ChainSpec {
 			)
 		},
 		Vec::new(),
+		None,
 		None,
 		None,
 		Some(properties),
@@ -146,6 +158,7 @@ pub fn odyssey_config() -> ChainSpec {
 fn odyssey_genesis(
 	initial_authorities: Vec<(AccountId, AccountId, AuraId, AresId)>,
 	initial_nominators: Vec<AccountId>,
+	manual_bridge: (AccountId, AccountId, OdysseyBalance),
 	root_key: AccountId,
 	endowed_accounts: Vec<AccountId>,
 	council_members: Vec<AccountId>,
@@ -213,12 +226,18 @@ fn odyssey_genesis(
 				.map(|member| (member.clone(), elections_stash))
 				.collect(),
 		},
+		manual_bridge: ManualBridgeConfig {
+			waiter_acc: Some(manual_bridge.clone().0),
+			stash_acc: Some(manual_bridge.clone().1),
+			min_balance_threshold: Some(manual_bridge.clone().2)
+		},
 		ares_oracle: AresOracleConfig {
 			_phantom: Default::default(),
 			request_base: Vec::new(),
 			price_pool_depth: 3u32,
-			price_allowable_offset: 10u8,
+			price_allowable_offset: Percent::from_percent(1),
 			authorities: vec![],
+			data_submission_interval: 100u32,
 			price_requests: vec![
 				// price_key, request_uri, parse_version, fraction_num, request interval
 				("btc-usdt".as_bytes().to_vec(), "btc".as_bytes().to_vec(), 2u32, 4, 2),

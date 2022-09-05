@@ -8,7 +8,6 @@ parameter_types! {
 }
 
 pub type TechnicalCollective = pallet_collective::Instance2;
-
 impl pallet_collective::Config<TechnicalCollective> for Runtime {
     type Origin = Origin;
     type Proposal = Call;

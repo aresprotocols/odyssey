@@ -4,7 +4,7 @@ use frame_election_provider_support::onchain;
 use frame_support::traits::U128CurrencyToVote;
 use frame_system::{EnsureOneOf, EnsureRoot};
 use governance::part_council::CouncilCollective;
-use pallet_ares_collective;
+use pallet_collective;
 use pallet_staking;
 pub use pallet_staking::StakerStatus;
 use part_elections::MAX_NOMINATIONS;
@@ -49,7 +49,7 @@ impl pallet_staking::Config for Runtime {
     type SlashCancelOrigin = EnsureOneOf<
         AccountId,
         EnsureRoot<AccountId>,
-        pallet_ares_collective::EnsureProportionAtLeast<_3, _4, AccountId, CouncilCollective>,
+        pallet_collective::EnsureProportionAtLeast<_3, _4, AccountId, CouncilCollective>,
     >;
     type SessionInterface = Self;
     type EraPayout = pallet_staking::ConvertCurve<RewardCurve>;

@@ -69,7 +69,7 @@ pub const MAX_NOMINATIONS: u32 = <NposSolution16 as sp_npos_elections::NposSolut
 type EnsureRootOrHalfCouncil = EnsureOneOf<
     AccountId,
     EnsureRoot<AccountId>,
-    pallet_ares_collective::EnsureProportionMoreThan<_1, _2, AccountId, CouncilCollective>,
+    pallet_collective::EnsureProportionMoreThan<_1, _2, AccountId, CouncilCollective>,
 >;
 
 impl pallet_election_provider_multi_phase::Config for Runtime {
