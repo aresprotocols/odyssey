@@ -9,17 +9,23 @@ description = "Logic which is common to all parachain runtimes"
 targets = ['x86_64-unknown-linux-gnu']
 
 [dependencies]
+smallvec = "1.8.0"
 # External dependencies
-codec = { package = 'parity-scale-codec', version = '2.3.0', features = ['derive'], default-features = false }
-frame-executive = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.17" }
-frame-system = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.17" }
-sp-core = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.17" }
-scale-info = { version = "1.0.0", default-features = false, features = ["derive"] }
-sp-consensus-aura = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.17" }
-sp-runtime = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.17" }
+codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = [ "derive", "max-encoded-len", ] }
+frame-support = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.28" }
+frame-executive = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.28" }
+frame-system = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.28" }
+sp-core = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.28" }
+scale-info = { version = "2.1.1", default-features = false, features = ["derive"] }
+sp-consensus-aura = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.28" }
+pallet-transaction-payment = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.28" }
+sp-runtime = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.28" }
+#primitives = { package = "polkadot-primitives", git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.28" }
+#primitives = { package = "polkadot-primitives", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.28" }
+#primitives = { package = "polkadot-primitives", path = "../../../primitives", default-features = false }
 
 # Ares suit
-ares-oracle-provider-support = { git = "https://github.com/aresprotocols/ocw-suit", default-features = false, branch = "polkadot-v0.9.17" }
+ares-oracle-provider-support = { git = "https://github.com/aresprotocols/ocw-suit", default-features = false, branch = "polkadot-v0.9.28" }
 
 [features]
 default = ["std"]

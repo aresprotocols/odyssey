@@ -1,18 +1,17 @@
 use super::*;
 use crate::governance::part_council::CouncilCollective;
-use frame_support::traits::EnsureOneOf;
-use sp_core::u32_trait::{_1, _2};
+use frame_support::traits::{EitherOfDiverse};
 
-type EnsureRootOrHalfCouncil = EnsureOneOf<
+type EnsureRootOrHalfCouncil = EitherOfDiverse<
 	EnsureRoot<AccountId>,
-	pallet_collective::EnsureProportionMoreThan<_1, _2, AccountId, CouncilCollective>,
+	pallet_collective::EnsureProportionMoreThan<AccountId, CouncilCollective, 1, 2>,
 >;
 
 parameter_types! {
-	// Minimum 100 bytes/ARES deposited (1 CENT/byte)
-	pub const BasicDeposit: Balance = 1000 * AMAS_UNITS;       // 258 bytes on-chain
-	pub const FieldDeposit: Balance = 250 * AMAS_UNITS;        // 66 bytes on-chain
-	pub const SubAccountDeposit: Balance = 200 * AMAS_UNITS;   // 53 bytes on-chain
+	// Minimum 4 CENTS/byte
+	pub const BasicDeposit: Balance = 100 * AMAS_CENTS;
+	pub const FieldDeposit: Balance = 20 * AMAS_CENTS;
+	pub const SubAccountDeposit: Balance = 20 * AMAS_UNITS;
 	pub const MaxSubAccounts: u32 = 100;
 	pub const MaxAdditionalFields: u32 = 100;
 	pub const MaxRegistrars: u32 = 20;

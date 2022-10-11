@@ -21,22 +21,25 @@ use crate::{
 	service::{new_partial, Block},
 };
 use codec::Encode;
-use cumulus_client_service::genesis::generate_genesis_block;
+// use cumulus_client_service::genesis::generate_genesis_block;
+use cumulus_client_cli::generate_genesis_block;
 use cumulus_primitives_core::ParaId;
 use log::info;
-use polkadot_parachain::primitives::AccountIdConversion;
+// use polkadot_parachain::primitives::AccountIdConversion;
+use sp_runtime::traits::{AccountIdConversion, Block as BlockT};
 use polkadot_service::IdentifyVariant;
 use sc_cli::{
 	ChainSpec, CliConfiguration, DefaultConfigurationValues, ImportParams, KeystoreParams, NetworkParams, Result,
 	RuntimeVersion, SharedParams, SubstrateCli,
 };
+use frame_benchmarking_cli::{BenchmarkCmd, SUBSTRATE_REFERENCE_HARDWARE};
 use sc_service::{
 	config::{BasePath, PrometheusConfig},
 	TaskManager,
 };
-
+use ares_para_common::AuraId;
 use sp_core::hexdisplay::HexDisplay;
-use sp_runtime::traits::Block as BlockT;
+// use sp_runtime::traits::Block as BlockT;
 use std::{io::Write, net::SocketAddr};
 use crate::service::odyssey::OdysseyRuntimeExecutor;
 
@@ -141,8 +144,8 @@ impl SubstrateCli for Cli {
 			&mars_runtime::VERSION
 		} else if chain_spec.is_odyssey() {
 			// TODO fix
-			// &odyssey_runtime::VERSION
-			&mars_runtime::VERSION
+			&odyssey_runtime::VERSION
+			// &mars_runtime::VERSION
 		} else {
 			&mars_runtime::VERSION
 		}
@@ -198,13 +201,33 @@ fn extract_genesis_wasm(chain_spec: &Box<dyn sc_service::ChainSpec>) -> Result<V
 		.ok_or_else(|| "Could not find wasm file in genesis state!".into())
 }
 
+/// Creates partial components for the runtimes that are supported by the benchmarks.
+macro_rules! construct_benchmark_partials {
+	($config:expr, |$partials:ident| $code:expr) => {
+
+		if $config.chain_spec.is_odyssey() {
+			let $partials = new_partial::<odyssey_runtime::RuntimeApi, _>(
+				&$config,
+				crate::service::aura_build_import_queue::<_, AuraId>,
+			)?;
+			$code
+		} else {
+			let $partials = new_partial::<mars_runtime::RuntimeApi, _>(
+				&$config,
+				crate::service::aura_build_import_queue::<_, AuraId>,
+			)?;
+			$code
+		}
+	};
+}
+
 macro_rules! construct_async_run {
 	(|$components:ident, $cli:ident, $cmd:ident, $config:ident| $( $code:tt )* ) => {{
 		let runner = $cli.create_runner($cmd)?;
 
 		if runner.config().chain_spec.is_mars() {
 			runner.async_run(|$config| {
-				let $components = new_partial::<mars_runtime::RuntimeApi, service::mars::MarsRuntimeExecutor, _>(
+				let $components = new_partial::<mars_runtime::RuntimeApi, _>(
 					&$config,
 					crate::service::mars::parachain_build_import_queue,
 				)?;
@@ -213,7 +236,7 @@ macro_rules! construct_async_run {
 			})
 		} else  if runner.config().chain_spec.is_odyssey() {
 			runner.async_run(|$config| {
-					let $components = new_partial::<odyssey_runtime::RuntimeApi, service::odyssey::OdysseyRuntimeExecutor, _>(
+					let $components = new_partial::<odyssey_runtime::RuntimeApi, _>(
 					&$config,
 					crate::service::odyssey::parachain_build_import_queue,
 				)?;
@@ -222,7 +245,7 @@ macro_rules! construct_async_run {
 			})
 		} else {
 			runner.async_run(|$config| {
-					let $components = new_partial::<mars_runtime::RuntimeApi, service::mars::MarsRuntimeExecutor, _>(
+					let $components = new_partial::<mars_runtime::RuntimeApi, _>(
 					&$config,
 					crate::service::mars::parachain_build_import_queue,
 				)?;
@@ -278,83 +301,140 @@ pub fn run() -> Result<()> {
 				cmd.run(config, polkadot_config)
 			})
 		}
-		Some(Subcommand::Revert(cmd)) => {
-			construct_async_run!(|components, cli, cmd, config| { Ok(cmd.run(components.client, components.backend)) })
-		}
-		Some(Subcommand::ExportGenesisState(params)) => {
-			let mut builder = sc_cli::LoggerBuilder::new("");
-			builder.with_profiling(sc_tracing::TracingReceiver::Log, "");
-			let _ = builder.init();
-
-			// let block: crate::service::Block = generate_genesis_block(&load_spec(
-			// 	&params.chain.clone().unwrap_or_default(),
-			// )?)?;
-
-			let spec = load_spec(&params.chain.clone().unwrap_or_default())?;
-			let state_version = Cli::native_runtime_version(&spec).state_version();
-			let block: crate::service::Block = generate_genesis_block(&spec, state_version)?;
-
-			let raw_header = block.header().encode();
-			let output_buf = if params.raw {
-				raw_header
-			} else {
-				format!("0x{:?}", HexDisplay::from(&block.header().encode())).into_bytes()
-			};
-
-			if let Some(output) = &params.output {
-				std::fs::write(output, output_buf)?;
-			} else {
-				std::io::stdout().write_all(&output_buf)?;
-			}
-
-			Ok(())
-		}
-		Some(Subcommand::ExportGenesisWasm(params)) => {
-			let mut builder = sc_cli::LoggerBuilder::new("");
-			builder.with_profiling(sc_tracing::TracingReceiver::Log, "");
-			let _ = builder.init();
-
-			let raw_wasm_blob = extract_genesis_wasm(&cli.load_spec(&params.chain.clone().unwrap_or_default())?)?;
-			let output_buf = if params.raw {
-				raw_wasm_blob
-			} else {
-				format!("0x{:?}", HexDisplay::from(&raw_wasm_blob)).into_bytes()
-			};
-
-			if let Some(output) = &params.output {
-				std::fs::write(output, output_buf)?;
-			} else {
-				std::io::stdout().write_all(&output_buf)?;
-			}
-
-			Ok(())
-		}
+		// Some(Subcommand::Revert(cmd)) => {
+		// 	construct_async_run!(|components, cli, cmd, config| { Ok(cmd.run(components.client, components.backend)) })
+		// }
+		Some(Subcommand::Revert(cmd)) => construct_async_run!(|components, cli, cmd, config| {
+			Ok(cmd.run(components.client, components.backend, None))
+		}),
+		// Some(Subcommand::ExportGenesisState(params)) => {
+		// 	let mut builder = sc_cli::LoggerBuilder::new("");
+		// 	builder.with_profiling(sc_tracing::TracingReceiver::Log, "");
+		// 	let _ = builder.init();
+		//
+		// 	// let block: crate::service::Block = generate_genesis_block(&load_spec(
+		// 	// 	&params.chain.clone().unwrap_or_default(),
+		// 	// )?)?;
+		//
+		// 	let spec = load_spec(&params.chain.clone().unwrap_or_default())?;
+		// 	let state_version = Cli::native_runtime_version(&spec).state_version();
+		// 	let block: crate::service::Block = generate_genesis_block(&spec, state_version)?;
+		//
+		// 	let raw_header = block.header().encode();
+		// 	let output_buf = if params.raw {
+		// 		raw_header
+		// 	} else {
+		// 		format!("0x{:?}", HexDisplay::from(&block.header().encode())).into_bytes()
+		// 	};
+		//
+		// 	if let Some(output) = &params.output {
+		// 		std::fs::write(output, output_buf)?;
+		// 	} else {
+		// 		std::io::stdout().write_all(&output_buf)?;
+		// 	}
+		//
+		// 	Ok(())
+		// }
+		Some(Subcommand::ExportGenesisState(cmd)) => {
+			let runner = cli.create_runner(cmd)?;
+			runner.sync_run(|_config| {
+				let spec = cli.load_spec(&cmd.shared_params.chain.clone().unwrap_or_default())?;
+				let state_version = Cli::native_runtime_version(&spec).state_version();
+				cmd.run::<crate::service::Block>(&*spec, state_version)
+			})
+		},
+		// Some(Subcommand::ExportGenesisWasm(cmd)) => {
+		// 	let mut builder = sc_cli::LoggerBuilder::new("");
+		// 	builder.with_profiling(sc_tracing::TracingReceiver::Log, "");
+		// 	let _ = builder.init();
+		//
+		// 	let raw_wasm_blob = extract_genesis_wasm(&cli.load_spec(&cmd.chain.clone().unwrap_or_default())?)?;
+		// 	let output_buf = if cmd.raw {
+		// 		raw_wasm_blob
+		// 	} else {
+		// 		format!("0x{:?}", HexDisplay::from(&raw_wasm_blob)).into_bytes()
+		// 	};
+		//
+		// 	if let Some(output) = &cmd.output {
+		// 		std::fs::write(output, output_buf)?;
+		// 	} else {
+		// 		std::io::stdout().write_all(&output_buf)?;
+		// 	}
+		//
+		// 	Ok(())
+		// }
+		Some(Subcommand::ExportGenesisWasm(cmd)) => {
+			let runner = cli.create_runner(cmd)?;
+			runner.sync_run(|_config| {
+				let spec = cli.load_spec(&cmd.shared_params.chain.clone().unwrap_or_default())?;
+				cmd.run(&*spec)
+			})
+		},
+		// Some(Subcommand::Benchmark(cmd)) => {
+		// 	if cfg!(feature = "runtime-benchmarks") {
+		// 		let runner = cli.create_runner(cmd)?;
+		//
+		// 		/*if runner.config().chain_spec.is_statemine() {
+		// 			runner.sync_run(|config| cmd.run::<Block, StatemineRuntimeExecutor>(config))
+		// 		} else if runner.config().chain_spec.is_westmint() {
+		// 			runner.sync_run(|config| cmd.run::<Block, WestmintRuntimeExecutor>(config))
+		// 		} else if runner.config().chain_spec.is_statemint() {
+		// 			runner.sync_run(|config| cmd.run::<Block, StatemintRuntimeExecutor>(config))
+		// 		} else */
+		// 		if runner.config().chain_spec.is_mars() {
+		// 			todo!("Not implement for mars.")
+		// 		// runner.sync_run(|config| cmd.run::<Block, StatemintRuntimeExecutor>(config))
+		// 		} else if runner.config().chain_spec.is_odyssey() {
+		// 			todo!("Not implement for odyssey.")
+		// 		// runner.sync_run(|config| cmd.run::<Block, StatemintRuntimeExecutor>(config))
+		// 		} else {
+		// 			Err("Chain doesn't support benchmarking".into())
+		// 		}
+		// 	} else {
+		// 		Err("Benchmarking wasn't enabled when building the node. \
+		// 		You can enable it with `--features runtime-benchmarks`."
+		// 			.into())
+		// 	}
+		// },
 		Some(Subcommand::Benchmark(cmd)) => {
-			if cfg!(feature = "runtime-benchmarks") {
-				let runner = cli.create_runner(cmd)?;
-
-				/*if runner.config().chain_spec.is_statemine() {
-					runner.sync_run(|config| cmd.run::<Block, StatemineRuntimeExecutor>(config))
-				} else if runner.config().chain_spec.is_westmint() {
-					runner.sync_run(|config| cmd.run::<Block, WestmintRuntimeExecutor>(config))
-				} else if runner.config().chain_spec.is_statemint() {
-					runner.sync_run(|config| cmd.run::<Block, StatemintRuntimeExecutor>(config))
-				} else */
-				if runner.config().chain_spec.is_mars() {
-					todo!("Not implement for mars.")
-				// runner.sync_run(|config| cmd.run::<Block, StatemintRuntimeExecutor>(config))
-				} else if runner.config().chain_spec.is_odyssey() {
-					todo!("Not implement for odyssey.")
-				// runner.sync_run(|config| cmd.run::<Block, StatemintRuntimeExecutor>(config))
-				} else {
-					Err("Chain doesn't support benchmarking".into())
-				}
-			} else {
-				Err("Benchmarking wasn't enabled when building the node. \
+			let runner = cli.create_runner(cmd)?;
+			// Switch on the concrete benchmark sub-command-
+			match cmd {
+				BenchmarkCmd::Pallet(cmd) =>
+					if cfg!(feature = "runtime-benchmarks") {
+						runner.sync_run(|config| {
+							if config.chain_spec.is_mars() {
+								todo!("Not implement for odyssey.")
+							} else if config.chain_spec.is_odyssey() {
+								todo!("Not implement for odyssey.")
+							} else {
+								Err("Chain doesn't support benchmarking".into())
+							}
+						})
+					} else {
+						Err("Benchmarking wasn't enabled when building the node. \
 				You can enable it with `--features runtime-benchmarks`."
-					.into())
+							.into())
+					},
+				BenchmarkCmd::Block(cmd) => runner.sync_run(|config| {
+					construct_benchmark_partials!(config, |partials| cmd.run(partials.client))
+				}),
+				BenchmarkCmd::Storage(cmd) => runner.sync_run(|config| {
+					construct_benchmark_partials!(config, |partials| {
+						let db = partials.backend.expose_db();
+						let storage = partials.backend.expose_storage();
+
+						cmd.run(config, partials.client.clone(), db, storage)
+					})
+				}),
+				BenchmarkCmd::Machine(cmd) =>
+					runner.sync_run(|config| cmd.run(&config, SUBSTRATE_REFERENCE_HARDWARE.clone())),
+				// NOTE: this allows the Client to leniently implement
+				// new benchmark commands without requiring a companion MR.
+				#[allow(unreachable_patterns)]
+				_ => Err("Benchmarking sub-command unsupported".into()),
 			}
-		}
+		},
 		Some(Subcommand::TryRuntime(cmd)) => {
 			if cfg!(feature = "try-runtime") {
 				// grab the task manager.
@@ -376,15 +456,25 @@ pub fn run() -> Result<()> {
 			}
 		},
 		None => {
+			// let runner = cli.create_runner(&cli.run.normalize())?;
 			let runner = cli.create_runner(&cli.run.normalize())?;
+			let collator_options = cli.run.collator_options();
+
 			runner.run_node_until_exit(|config| async move {
-				let para_id = chain_spec::Extensions::try_get(&*config.chain_spec).map(|e| e.para_id);
+
+				let hwbench = if !cli.no_hardware_benchmarks {
+					config.database.path().map(|database_path| {
+						let _ = std::fs::create_dir_all(&database_path);
+						sc_sysinfo::gather_hwbench(Some(database_path))
+					})
+				} else {
+					None
+				};
+
 
 				let polkadot_cli = RelayChainCli::new(
 					&config,
-					[RelayChainCli::executable_name().to_string()]
-						.iter()
-						.chain(cli.relaychain_args.iter()),
+					[RelayChainCli::executable_name()].iter().chain(cli.relaychain_args.iter()),
 				);
 
 				let para_id = chain_spec::Extensions::try_get(&*config.chain_spec)
@@ -392,51 +482,73 @@ pub fn run() -> Result<()> {
 					.ok_or_else(|| "Could not find parachain ID in chain-spec.")?;
 
 				let id = ParaId::from(para_id);
-				let parachain_account = AccountIdConversion::<polkadot_primitives::v0::AccountId>::into_account(&id);
 
-				// let block: crate::service::Block =
-				// 	generate_genesis_block(&config.chain_spec).map_err(|e| format!("{:?}", e))?;
+				let parachain_account =
+					AccountIdConversion::<polkadot_primitives::v2::AccountId>::into_account_truncating(&id);
 
-				let state_version =
-					RelayChainCli::native_runtime_version(&config.chain_spec).state_version();
-
-				let block: crate::service::Block =
-					generate_genesis_block(&config.chain_spec, state_version)
-						.map_err(|e| format!("{:?}", e))?;
-
+				let state_version = Cli::native_runtime_version(&config.chain_spec).state_version();
+				let block: Block = generate_genesis_block(&*config.chain_spec, state_version)
+					.map_err(|e| format!("{:?}", e))?;
 				let genesis_state = format!("0x{:?}", HexDisplay::from(&block.header().encode()));
 
-				let polkadot_config = SubstrateCli::create_configuration(&polkadot_cli, &polkadot_cli, config.tokio_handle.clone())
-					.map_err(|err| format!("Relay chain argument error: {}", err))?;
+				let tokio_handle = config.tokio_handle.clone();
+				let polkadot_config =
+					SubstrateCli::create_configuration(&polkadot_cli, &polkadot_cli, tokio_handle)
+						.map_err(|err| format!("Relay chain argument error: {}", err))?;
 
 				info!("Parachain id: {:?}", id);
 				info!("Parachain Account: {}", parachain_account);
 				info!("Parachain genesis state: {}", genesis_state);
-				info!(
-					"Is collating: {}",
-					if config.role.is_authority() { "yes" } else { "no" }
-				);
+				info!("Is collating: {}", if config.role.is_authority() { "yes" } else { "no" });
 
 				if config.chain_spec.is_mars() {
-					crate::service::mars::start_parachain_node(config, polkadot_config, id, get_warehouse_params(cli))
-						.await
-						.map(|r| r.0)
-						.map_err(Into::into)
+					// crate::service::mars::start_parachain_node(config, polkadot_config, id, get_warehouse_params(cli))
+					// 	.await
+					// 	.map(|r| r.0)
+					// 	.map_err(Into::into)
+					crate::service::mars::start_parachain_node(
+						config,
+						polkadot_config,
+						collator_options,
+						id,
+						hwbench,
+					).await.map(|r| r.0).map_err(Into::into)
 				} else if config.chain_spec.is_dev() {
-					crate::service::mars::start_parachain_node(config, polkadot_config, id, get_warehouse_params(cli))
-						.await
-						.map(|r| r.0)
-						.map_err(Into::into)
+					// crate::service::mars::start_parachain_node(config, polkadot_config, id, get_warehouse_params(cli))
+					// 	.await
+					// 	.map(|r| r.0)
+					// 	.map_err(Into::into)
+					crate::service::mars::start_parachain_node(
+						config,
+						polkadot_config,
+						collator_options,
+						id,
+						hwbench,
+					).await.map(|r| r.0).map_err(Into::into)
 				} else if config.chain_spec.is_odyssey() {
-					crate::service::odyssey::start_parachain_node(config, polkadot_config, id, get_warehouse_params(cli))
-						.await
-						.map(|r| r.0)
-						.map_err(Into::into)
+					// crate::service::odyssey::start_parachain_node(config, polkadot_config, id, get_warehouse_params(cli))
+					// 	.await
+					// 	.map(|r| r.0)
+					// 	.map_err(Into::into)
+					crate::service::odyssey::start_parachain_node(
+						config,
+						polkadot_config,
+						collator_options,
+						id,
+						hwbench,
+					).await.map(|r| r.0).map_err(Into::into)
 				}  else {
-					crate::service::mars::start_parachain_node(config, polkadot_config, id, get_warehouse_params(cli))
-						.await
-						.map(|r| r.0)
-						.map_err(Into::into)
+					// crate::service::mars::start_parachain_node(config, polkadot_config, id, get_warehouse_params(cli))
+					// 	.await
+					// 	.map(|r| r.0)
+					// 	.map_err(Into::into)
+					crate::service::mars::start_parachain_node(
+						config,
+						polkadot_config,
+						collator_options,
+						id,
+						hwbench,
+					).await.map(|r| r.0).map_err(Into::into)
 				}
 			})
 		}
@@ -512,10 +624,6 @@ impl CliConfiguration<Self> for RelayChainCli {
 		self.base.base.rpc_ws(default_listen_port)
 	}
 
-	// fn prometheus_config(&self, default_listen_port: u16) -> Result<Option<PrometheusConfig>> {
-	// 	self.base.base.prometheus_config(default_listen_port)
-	// }
-
 	fn prometheus_config(
 		&self,
 		default_listen_port: u16,
@@ -523,10 +631,6 @@ impl CliConfiguration<Self> for RelayChainCli {
 	) -> Result<Option<PrometheusConfig>> {
 		self.base.base.prometheus_config(default_listen_port, chain_spec)
 	}
-
-	// fn init<C: SubstrateCli>(&self) -> Result<()> {
-	// 	unreachable!("PolkadotCli is never initialized; qed");
-	// }
 
 	fn init<F>(
 		&self,
@@ -541,23 +645,18 @@ impl CliConfiguration<Self> for RelayChainCli {
 		unreachable!("PolkadotCli is never initialized; qed");
 	}
 
-
 	fn chain_id(&self, is_dev: bool) -> Result<String> {
 		let chain_id = self.base.base.chain_id(is_dev)?;
 
-		Ok(if chain_id.is_empty() {
-			self.chain_id.clone().unwrap_or_default()
-		} else {
-			chain_id
-		})
+		Ok(if chain_id.is_empty() { self.chain_id.clone().unwrap_or_default() } else { chain_id })
 	}
 
 	fn role(&self, is_dev: bool) -> Result<sc_service::Role> {
 		self.base.base.role(is_dev)
 	}
 
-	fn transaction_pool(&self) -> Result<sc_service::config::TransactionPoolOptions> {
-		self.base.base.transaction_pool()
+	fn transaction_pool(&self, is_dev: bool) -> Result<sc_service::config::TransactionPoolOptions> {
+		self.base.base.transaction_pool(is_dev)
 	}
 
 	fn state_cache_child_ratio(&self) -> Result<Option<usize>> {
@@ -572,17 +671,9 @@ impl CliConfiguration<Self> for RelayChainCli {
 		self.base.base.rpc_ws_max_connections()
 	}
 
-	// fn rpc_http_threads(&self) -> Result<Option<usize>> {
-	// 	self.base.base.rpc_http_threads()
-	// }
-
 	fn rpc_cors(&self, is_dev: bool) -> Result<Option<Vec<String>>> {
 		self.base.base.rpc_cors(is_dev)
 	}
-
-	// fn telemetry_external_transport(&self) -> Result<Option<sc_service::config::ExtTransport>> {
-	// 	self.base.base.telemetry_external_transport()
-	// }
 
 	fn default_heap_pages(&self) -> Result<Option<u64>> {
 		self.base.base.default_heap_pages()
@@ -604,7 +695,14 @@ impl CliConfiguration<Self> for RelayChainCli {
 		self.base.base.announce_block()
 	}
 
-	fn telemetry_endpoints(&self, chain_spec: &Box<dyn ChainSpec>) -> Result<Option<sc_telemetry::TelemetryEndpoints>> {
+	fn telemetry_endpoints(
+		&self,
+		chain_spec: &Box<dyn ChainSpec>,
+	) -> Result<Option<sc_telemetry::TelemetryEndpoints>> {
 		self.base.base.telemetry_endpoints(chain_spec)
+	}
+
+	fn node_name(&self) -> Result<String> {
+		self.base.base.node_name()
 	}
 }

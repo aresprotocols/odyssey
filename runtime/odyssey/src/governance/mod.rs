@@ -8,4 +8,5 @@ pub mod part_scheduler;
 pub mod part_technical;
 pub mod part_treasury;
 pub mod part_vesting;
-mod part_indentity;
+pub mod part_indentity;
+pub mod part_child_bounties;

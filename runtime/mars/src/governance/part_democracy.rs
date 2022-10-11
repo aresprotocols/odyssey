@@ -2,28 +2,28 @@ use super::*;
 
 use ares_para_common::constants::currency::{AMAS_CENTS, AMAS_UNITS};
 use ares_para_common::constants::time::MINUTES;
+use frame_support::traits::{EitherOfDiverse};
 use pallet_democracy;
 use part_council::CouncilCollective;
 use part_technical::TechnicalCollective;
 
-use sp_core::u32_trait::{_1, _2, _3, _4};
-
-// use frame_system::{EnsureOneOf, EnsureRoot};
-use frame_support::traits::EnsureOneOf;
-use frame_system::{EnsureRoot};
-
 parameter_types! {
     pub const LaunchPeriod: BlockNumber = 28 * 24 * 60 * MINUTES;
+	// pub LaunchPeriod: BlockNumber = prod_or_fast!(28 * DAYS, 1, "ARES_LAUNCH_PERIOD");
     pub const VotingPeriod: BlockNumber = 28 * 24 * 60 * MINUTES;
-    pub const FastTrackVotingPeriod: BlockNumber = 3 * 24 * 60 * MINUTES;
-    pub const InstantAllowed: bool = true;
+	// pub VotingPeriod: BlockNumber = prod_or_fast!(28 * DAYS, 1 * MINUTES, "ARES_VOTING_PERIOD");
+    pub const FastTrackVotingPeriod: BlockNumber = 3 * MINUTES;
+	// pub FastTrackVotingPeriod: BlockNumber = prod_or_fast!(3 * HOURS, 1 * MINUTES, "ARES_FAST_TRACK_VOTING_PERIOD");
     pub const MinimumDeposit: Balance = 100 * AMAS_UNITS;
+	// pub const MinimumDeposit: Balance = 100 * DOLLARS * ARES_AMOUNT_MULT;
     pub const EnactmentPeriod: BlockNumber = 30 * 24 * 60 * MINUTES;
+	// pub EnactmentPeriod: BlockNumber = prod_or_fast!(28 * DAYS, 1, "ARES_ENACTMENT_PERIOD");
     pub const CooloffPeriod: BlockNumber = 28 * 24 * 60 * MINUTES;
-    // One cent: $10,000 / MB
+	// pub CooloffPeriod: BlockNumber = prod_or_fast!(7 * DAYS, 1, "ARES_COOLOFF_PERIOD");
+	pub const InstantAllowed: bool = true;
     pub const PreimageByteDeposit: Balance = 1 * AMAS_CENTS;
-    pub const MaxVotes: u32 = 100;
-    pub const MaxProposals: u32 = 100;
+	pub const MaxVotes: u32 = 100;
+	pub const MaxProposals: u32 = 100;
 }
 
 impl pallet_democracy::Config for Runtime {
@@ -31,45 +31,27 @@ impl pallet_democracy::Config for Runtime {
     type Event = Event;
     type Currency = Balances;
     type EnactmentPeriod = EnactmentPeriod;
-    type VoteLockingPeriod = EnactmentPeriod;
     type LaunchPeriod = LaunchPeriod;
     type VotingPeriod = VotingPeriod;
+    type VoteLockingPeriod = EnactmentPeriod; // Same as EnactmentPeriod
     type MinimumDeposit = MinimumDeposit;
-    /// A straight majority of the council can decide what their next motion is.
-    type ExternalOrigin =
-        pallet_collective::EnsureProportionAtLeast<_1, _2, AccountId, CouncilCollective>;
-    /// A super-majority can have the next scheduled referendum be a straight majority-carries vote.
-    type ExternalMajorityOrigin =
-        pallet_collective::EnsureProportionAtLeast<_3, _4, AccountId, CouncilCollective>;
-    /// A unanimous council can have the next scheduled referendum be a straight default-carries
-    /// (NTB) vote.
-    type ExternalDefaultOrigin =
-        pallet_collective::EnsureProportionAtLeast<_1, _1, AccountId, CouncilCollective>;
-    /// Two thirds of the technical committee can have an ExternalMajority/ExternalDefault vote
-    /// be tabled immediately and with a shorter voting/enactment period.
-    type FastTrackOrigin =
-        pallet_collective::EnsureProportionAtLeast<_2, _3, AccountId, TechnicalCollective>;
-    type InstantOrigin =
-        pallet_collective::EnsureProportionAtLeast<_1, _1, AccountId, TechnicalCollective>;
+    type ExternalOrigin = pallet_collective::EnsureProportionAtLeast<AccountId, CouncilCollective, 1, 2>;
+    type ExternalMajorityOrigin = pallet_collective::EnsureProportionAtLeast<AccountId, CouncilCollective, 3, 5>;
+    type ExternalDefaultOrigin = pallet_collective::EnsureProportionAtLeast<AccountId, CouncilCollective, 1, 1>;
+    type FastTrackOrigin = pallet_collective::EnsureProportionAtLeast<AccountId, TechnicalCollective, 2, 3>;
+    type InstantOrigin = pallet_collective::EnsureProportionAtLeast<AccountId, TechnicalCollective, 1, 1>;
     type InstantAllowed = InstantAllowed;
     type FastTrackVotingPeriod = FastTrackVotingPeriod;
-    // To cancel a proposal which has been passed, 2/3 of the council must agree to it.
-    type CancellationOrigin =
-        pallet_collective::EnsureProportionAtLeast<_2, _3, AccountId, CouncilCollective>;
-    // To cancel a proposal before it has been passed, the technical committee must be unanimous or
-    // Root must agree.
-    type CancelProposalOrigin = EnsureOneOf<
+    type CancellationOrigin = pallet_collective::EnsureProportionAtLeast<AccountId, CouncilCollective, 2, 3>;
+    type CancelProposalOrigin = EitherOfDiverse<
         EnsureRoot<AccountId>,
-        pallet_collective::EnsureProportionAtLeast<_1, _1, AccountId, TechnicalCollective>,
+        pallet_collective::EnsureProportionAtLeast<AccountId, TechnicalCollective, 1, 1>,
     >;
     type BlacklistOrigin = EnsureRoot<AccountId>;
-    // Any single technical committee member may veto a coming council proposal, however they can
-    // only do it once and it lasts only for the cool-off period.
     type VetoOrigin = pallet_collective::EnsureMember<AccountId, TechnicalCollective>;
     type CooloffPeriod = CooloffPeriod;
     type PreimageByteDeposit = PreimageByteDeposit;
-    type OperationalPreimageOrigin =
-        pallet_collective::EnsureMember<AccountId, CouncilCollective>;
+    type OperationalPreimageOrigin = pallet_collective::EnsureMember<AccountId, CouncilCollective>;
     type Slash = Treasury;
     type Scheduler = Scheduler;
     type PalletsOrigin = OriginCaller;

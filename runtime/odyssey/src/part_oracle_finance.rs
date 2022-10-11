@@ -27,6 +27,7 @@ impl oracle_finance::Config for Runtime {
     type ValidatorId = <Self as frame_system::Config>::AccountId;
     // type ValidatorIdOf = pallet_staking::StashOf<Self>;
     type ValidatorIdOf = SelfIsSelf<Self>;
+    type WeightInfo = oracle_finance::weights::SubstrateWeight<Self>;
 }
 
 pub struct SelfIsSelf<T>(sp_std::marker::PhantomData<T>);

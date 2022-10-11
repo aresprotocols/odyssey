@@ -176,6 +176,7 @@ fn mars_genesis(
 				.to_vec(),
 			// changes_trie_config: Default::default(),
 		},
+		transaction_payment: Default::default(),
 		balances: BalancesConfig {
 			balances: endowed_accounts.iter().cloned().map(|k| (k, endowment)).collect(),
 		},

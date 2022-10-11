@@ -26,12 +26,13 @@ use sc_transaction_pool_api::TransactionPool;
 use sp_api::ProvideRuntimeApi;
 use sp_block_builder::BlockBuilder;
 use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
-use polkadot_primitives::v1::{AccountId, Nonce, Block, Balance};
+use polkadot_primitives::v2::{AccountId, Nonce, Block, Balance};
+use jsonrpc_core::Metadata;
 
 // use parachains_common::{AccountId, Balance, Block, Index as Nonce};
 
 /// A type representing all RPC extensions.
-pub type RpcExtension = jsonrpc_core::IoHandler<sc_rpc::Metadata>;
+pub type RpcExtension = jsonrpsee::RpcModule<()>;
 
 /// Full client dependencies
 pub struct FullDeps<C, P> {
@@ -44,28 +45,29 @@ pub struct FullDeps<C, P> {
 }
 
 /// Instantiate all RPC extensions.
-pub fn create_full<C, P>(deps: FullDeps<C, P>) -> RpcExtension
-where
-	C: ProvideRuntimeApi<Block>
+pub fn create_full<C, P>(
+	deps: FullDeps<C, P>,
+) -> Result<RpcExtension, Box<dyn std::error::Error + Send + Sync>>
+	where
+		C: ProvideRuntimeApi<Block>
 		+ HeaderBackend<Block>
 		+ AuxStore
 		+ HeaderMetadata<Block, Error = BlockChainError>
 		+ Send
 		+ Sync
 		+ 'static,
-	C::Api: frame_rpc_system::AccountNonceApi<Block, AccountId, Nonce>,
-	C::Api: pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>,
-	C::Api: BlockBuilder<Block>,
-	P: TransactionPool + Sync + Send + 'static,
+		C::Api: pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>,
+		C::Api: frame_rpc_system::AccountNonceApi<Block, AccountId, Nonce>,
+		C::Api: BlockBuilder<Block>,
+		P: TransactionPool + Sync + Send + 'static,
 {
-	use frame_rpc_system::{FullSystem, SystemApi};
-	use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApi};
+	use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApiServer};
+	use frame_rpc_system::{System, SystemApiServer};
 
-	let mut io = jsonrpc_core::IoHandler::default();
+	let mut module = RpcExtension::new(());
 	let FullDeps { client, pool, deny_unsafe } = deps;
 
-	io.extend_with(SystemApi::to_delegate(FullSystem::new(client.clone(), pool, deny_unsafe)));
-	io.extend_with(TransactionPaymentApi::to_delegate(TransactionPayment::new(client.clone())));
-
-	io
+	module.merge(System::new(client.clone(), pool, deny_unsafe).into_rpc())?;
+	module.merge(TransactionPayment::new(client).into_rpc())?;
+	Ok(module)
 }

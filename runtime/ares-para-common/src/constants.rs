@@ -1,3 +1,44 @@
+
+use frame_support::{
+    parameter_types,
+    traits::{ConstU32, Currency, OneSessionHandler},
+    weights::{constants::WEIGHT_PER_SECOND, Weight},
+};
+use frame_support::sp_runtime::Perbill;
+use pallet_transaction_payment::{Multiplier, TargetedFeeAdjustment};
+use crate::BlockNumber;
+use sp_runtime::Perquintill;
+use frame_system::limits;
+use crate::sp_runtime::FixedPointNumber;
+
+/// We assume that an on-initialize consumes 1% of the weight on average, hence a single extrinsic
+/// will not be allowed to consume more than `AvailableBlockRatio - 1%`.
+pub const AVERAGE_ON_INITIALIZE_RATIO: Perbill = Perbill::from_percent(1);
+/// We allow `Normal` extrinsics to fill up the block up to 75%, the rest can be used
+/// by  Operational  extrinsics.
+pub const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(75);
+/// We allow for 2 seconds of compute with a 6 second average block time.
+pub const MAXIMUM_BLOCK_WEIGHT: Weight = 2 * WEIGHT_PER_SECOND;
+
+// Common constants used in all runtimes.
+parameter_types! {
+	pub const BlockHashCount: BlockNumber = 2400;
+	/// The portion of the `NORMAL_DISPATCH_RATIO` that we adjust the fees with. Blocks filled less
+    /// than this will decrease the weight and more will increase.
+	pub const TargetBlockFullness: Perquintill = Perquintill::from_percent(25);
+	/// The adjustment variable of the runtime. Higher values will cause `TargetBlockFullness` to
+    /// change the fees more rapidly.
+	pub AdjustmentVariable: Multiplier = Multiplier::saturating_from_rational(75, 1000_000);
+	/// Minimum amount of the multiplier. This value cannot be too low. A test case should ensure
+    /// that combined with `AdjustmentVariable`, we can recover from the minimum.
+    /// See `multiplier_can_grow_from_zero`.
+	pub MinimumMultiplier: Multiplier = Multiplier::saturating_from_rational(1, 10u128);
+	/// Maximum length of block. Up to 5MB.
+	pub BlockLength: limits::BlockLength =
+	limits::BlockLength::max_with_normal_ratio(5 * 1024 * 1024, NORMAL_DISPATCH_RATIO);
+}
+
+
 pub mod currency {
     // use node_primitives::Balance;
     pub type CurrencyBalance = u128;
@@ -76,3 +117,43 @@ pub mod time {
     pub const DAYS: BlockNumber = HOURS * 24;
 }
 
+/// Fee-related.
+pub mod fee {
+    use frame_support::weights::{
+        WeightToFeeCoefficient, WeightToFeeCoefficients, WeightToFeePolynomial,
+    };
+    use frame_support::weights::constants::ExtrinsicBaseWeight;
+    // use primitives::v2::Balance;
+    use smallvec::smallvec;
+    pub use sp_runtime::Perbill;
+    use crate::Balance;
+
+    /// The block saturation level. Fees will be updates based on this value.
+    pub const TARGET_BLOCK_FULLNESS: Perbill = Perbill::from_percent(25);
+
+    /// Handles converting a weight scalar to a fee value, based on the scale and granularity of the
+    /// node's balance type.
+    ///
+    /// This should typically create a mapping between the following ranges:
+    ///   - [0, `MAXIMUM_BLOCK_WEIGHT`]
+    ///   - [Balance::min, Balance::max]
+    ///
+    /// Yet, it can be used for any other sort of change to weight-fee. Some examples being:
+    ///   - Setting it to `0` will essentially disable the weight fee.
+    ///   - Setting it to `1` will cause the literal `#[weight = x]` values to be charged.
+    pub struct WeightToFee;
+    impl WeightToFeePolynomial for WeightToFee {
+        type Balance = Balance;
+        fn polynomial() -> WeightToFeeCoefficients<Self::Balance> {
+            // in Polkadot, extrinsic base weight (smallest non-zero weight) is mapped to 1/10 CENT:
+            let p = super::currency::AMAS_CENTS;
+            let q = 10 * Balance::from(ExtrinsicBaseWeight::get());
+            smallvec![WeightToFeeCoefficient {
+				degree: 1,
+				negative: false,
+				coeff_frac: Perbill::from_rational(p % q, q),
+				coeff_integer: p / q,
+			}]
+        }
+    }
+}

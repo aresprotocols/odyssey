@@ -50,15 +50,103 @@ pub type SignedBlock<TCall, TSignedExtra> = generic::SignedBlock<Block<TCall, TS
 /// BlockId type as expected by this runtime.
 pub type BlockId<TCall, TSignedExtra> = generic::BlockId<Block<TCall, TSignedExtra>>;
 
-// pub mod opaque {
-//     use super::*;
-//     use sp_runtime::{generic, traits::BlakeTwo256};
+// ------
+
+// Common constants used in all runtimes.
+// parameter_types! {
+// 	pub const BlockHashCount: BlockNumber = 2400;
+// 	/// The portion of the `NORMAL_DISPATCH_RATIO` that we adjust the fees with. Blocks filled less
+//     /// than this will decrease the weight and more will increase.
+// 	pub const TargetBlockFullness: Perquintill = Perquintill::from_percent(25);
+// 	/// The adjustment variable of the runtime. Higher values will cause `TargetBlockFullness` to
+//     /// change the fees more rapidly.
+// 	pub AdjustmentVariable: Multiplier = Multiplier::saturating_from_rational(3, 100_000);
+// 	/// Minimum amount of the multiplier. This value cannot be too low. A test case should ensure
+//     /// that combined with `AdjustmentVariable`, we can recover from the minimum.
+//     /// See `multiplier_can_grow_from_zero`.
+// 	pub MinimumMultiplier: Multiplier = Multiplier::saturating_from_rational(1, 1_000_000u128);
+// 	/// Maximum length of block. Up to 5MB.
+// 	pub BlockLength: limits::BlockLength =
+// 		limits::BlockLength::max_with_normal_ratio(5 * 1024 * 1024, NORMAL_DISPATCH_RATIO);
+// 	/// Block weights base values and limits.
+// 	pub BlockWeights: limits::BlockWeights = limits::BlockWeights::builder()
+// 		.base_block(BlockExecutionWeight::get())
+// 		.for_class(DispatchClass::all(), |weights| {
+// 			weights.base_extrinsic = ExtrinsicBaseWeight::get();
+// 		})
+// 		.for_class(DispatchClass::Normal, |weights| {
+// 			weights.max_total = Some(NORMAL_DISPATCH_RATIO * MAXIMUM_BLOCK_WEIGHT);
+// 		})
+// 		.for_class(DispatchClass::Operational, |weights| {
+// 			weights.max_total = Some(MAXIMUM_BLOCK_WEIGHT);
+// 			// Operational transactions have an extra reserved space, so that they
+// 			// are included even if block reached `MAXIMUM_BLOCK_WEIGHT`.
+// 			weights.reserved = Some(
+// 				MAXIMUM_BLOCK_WEIGHT - NORMAL_DISPATCH_RATIO * MAXIMUM_BLOCK_WEIGHT,
+// 			);
+// 		})
+// 		.avg_block_initialization(AVERAGE_ON_INITIALIZE_RATIO)
+// 		.build_or_panic();
+// }
 //
-//     pub use sp_runtime::OpaqueExtrinsic as UncheckedExtrinsic;
-//     /// Opaque block header type.
-//     pub type Header = generic::Header<BlockNumber, BlakeTwo256>;
-//     /// Opaque block type.
-//     pub type Block = generic::Block<Header, UncheckedExtrinsic>;
-//     /// Opaque block identifier type.
-//     pub type BlockId = generic::BlockId<Block>;
+// /// A source of random balance for the NPoS Solver, which is meant to be run by the off-chain worker
+// /// election miner.
+// pub struct OffchainRandomBalancing;
+// impl Get<Option<BalancingConfig>> for OffchainRandomBalancing {
+//     fn get() -> Option<BalancingConfig> {
+//         use sp_runtime::traits::TrailingZeroInput;
+//         let iterations = match MINER_MAX_ITERATIONS {
+//             0 => 0,
+//             max => {
+//                 let seed = sp_io::offchain::random_seed();
+//                 let random = <u32>::decode(&mut TrailingZeroInput::new(&seed))
+//                     .expect("input is padded with zeroes; qed") %
+//                     max.saturating_add(1);
+//                 random as usize
+//             },
+//         };
+//
+//         let config = BalancingConfig { iterations, tolerance: 0 };
+//         Some(config)
+//     }
+// }
+//
+// /// Logic for the author to get a portion of fees.
+// pub struct ToAuthor<R>(sp_std::marker::PhantomData<R>);
+// impl<R> OnUnbalanced<NegativeImbalance<R>> for ToAuthor<R>
+//     where
+//         R: pallet_balances::Config + pallet_authorship::Config,
+//         <R as frame_system::Config>::AccountId: From<AccountId>,
+//         <R as frame_system::Config>::AccountId: Into<AccountId>,
+//         <R as frame_system::Config>::Event: From<pallet_balances::Event<R>>,
+// {
+//     fn on_nonzero_unbalanced(amount: NegativeImbalance<R>) {
+//         if let Some(author) = <pallet_authorship::Pallet<R>>::author() {
+//             <pallet_balances::Pallet<R>>::resolve_creating(&author, amount);
+//         }
+//     }
+// }
+//
+// pub struct DealWithFees<R>(sp_std::marker::PhantomData<R>);
+// impl<R> OnUnbalanced<NegativeImbalance<R>> for DealWithFees<R>
+//     where
+//         R: pallet_balances::Config + pallet_treasury::Config + pallet_authorship::Config,
+//         pallet_treasury::Pallet<R>: OnUnbalanced<NegativeImbalance<R>>,
+//         <R as frame_system::Config>::AccountId: From<AccountId>,
+//         <R as frame_system::Config>::AccountId: Into<AccountId>,
+//         <R as frame_system::Config>::Event: From<pallet_balances::Event<R>>,
+// {
+//     fn on_unbalanceds<B>(mut fees_then_tips: impl Iterator<Item = NegativeImbalance<R>>) {
+//         if let Some(fees) = fees_then_tips.next() {
+//             // for fees, 80% to treasury, 20% to author
+//             let mut split = fees.ration(80, 20);
+//             if let Some(tips) = fees_then_tips.next() {
+//                 // for tips, if any, 100% to author
+//                 tips.merge_into(&mut split.1);
+//             }
+//             use pallet_treasury::Pallet as Treasury;
+//             <Treasury<R> as OnUnbalanced<_>>::on_unbalanced(split.0);
+//             <ToAuthor<R> as OnUnbalanced<_>>::on_unbalanced(split.1);
+//         }
+//     }
 // }
