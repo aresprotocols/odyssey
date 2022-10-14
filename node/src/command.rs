@@ -512,6 +512,7 @@ pub fn run() -> Result<()> {
 						collator_options,
 						id,
 						hwbench,
+						get_warehouse_params(cli),
 					).await.map(|r| r.0).map_err(Into::into)
 				} else if config.chain_spec.is_dev() {
 					// crate::service::mars::start_parachain_node(config, polkadot_config, id, get_warehouse_params(cli))
@@ -524,6 +525,7 @@ pub fn run() -> Result<()> {
 						collator_options,
 						id,
 						hwbench,
+						get_warehouse_params(cli),
 					).await.map(|r| r.0).map_err(Into::into)
 				} else if config.chain_spec.is_odyssey() {
 					// crate::service::odyssey::start_parachain_node(config, polkadot_config, id, get_warehouse_params(cli))
@@ -536,6 +538,7 @@ pub fn run() -> Result<()> {
 						collator_options,
 						id,
 						hwbench,
+						get_warehouse_params(cli),
 					).await.map(|r| r.0).map_err(Into::into)
 				}  else {
 					// crate::service::mars::start_parachain_node(config, polkadot_config, id, get_warehouse_params(cli))
@@ -548,6 +551,7 @@ pub fn run() -> Result<()> {
 						collator_options,
 						id,
 						hwbench,
+						get_warehouse_params(cli),
 					).await.map(|r| r.0).map_err(Into::into)
 				}
 			})

@@ -1,0 +1,75 @@
+version: "3.7"
+services:
+  parachain-2028-0:
+    ports:
+      - 9956:9944
+      - 9945:9933
+      - 30435:30333
+    volumes:
+      - parachain-2028-0:/data
+    build:
+      context: https://github.com/aresprotocols/odyssey.git#polkadot-v0.9.28
+      dockerfile: builder.Dockerfile
+    container_name: parachain-mars-one
+    image: aresprotocollab/parachain_node_0928
+    command:
+      - --base-path=/tmp/parachain/mars/data-10
+      - --chain=mars.0928-chain-spec.json
+      - --ws-external
+      - --rpc-external
+      - --rpc-cors=all
+      - --name=parachain-2008-0
+      - --collator
+      - --rpc-methods=unsafe
+      - --force-authoring
+      - --execution=wasm
+      - --warehouse=http://api.aresprotocol.io
+      - --node-key=f4cad3d3e20dc2f952634c0111fcabde3493ae53d7cd01a032dd10e14d93dffb
+      - --
+      - --chain=relay-node11-raw.json
+      - --execution=wasm
+      - --bootnodes=/ip4/202.182.100.187/tcp/30633/p2p/12D3KooWKzDxQikr9YEbdXbkG1xmdcoenkRezfN2Do43dEaKjxAu
+      - --bootnodes=/ip4/202.182.100.187/tcp/30634/p2p/12D3KooWMw8SxpEYNnYimDSyWNypZ3JvNsgjAjD24m4ERUCSpoHq
+    environment:
+      RUST_LOG: sc_basic_authorship=trace,cumulus-consensus=trace,cumulus-collator=trace,collator_protocol=trace,collation_generation=trace,aura=debug
+    ulimits:
+      &a1
+      nofile:
+        soft: 65536
+        hard: 65536
+  parachain-2028-1:
+    ports:
+      - 9957:9944
+      - 9946:9933
+      - 30436:30333
+    volumes:
+      - parachain-2028-1:/data
+    container_name: parachain-mars-one
+    image: aresprotocollab/parachain_node_0928
+    command:
+      - --base-path=/tmp/parachain/mars/data-11 \
+      - --chain=mars.0928-chain-spec.json \
+      - --ws-external
+      - --rpc-external
+      - --rpc-cors=all
+      - --name=parachain-2008-1
+      - --collator
+      - --rpc-methods=unsafe
+      - --force-authoring
+      - --execution=wasm
+      - --warehouse=http://api.aresprotocol.io
+      - --
+      - --chain=relay-node11-raw.json
+      - --execution=wasm
+      - --bootnodes=/ip4/202.182.100.187/tcp/30334/p2p/12D3KooWMw8SxpEYNnYimDSyWNypZ3JvNsgjAjD24m4ERUCSpoHq
+      - --bootnodes=/ip4/202.182.100.187/tcp/30333/p2p/12D3KooWKtEfw8CxuRx2QrTqpWwzeuJdsPCATsyMs6wE9wCk6HKK
+    environment:
+      RUST_LOG: sc_basic_authorship=trace,cumulus-consensus=trace,cumulus-collator=trace,collator_protocol=trace,collation_generation=trace,aura=debug
+    ulimits: *a1
+volumes:
+  ? parachain-2028-0
+  ? parachain-2028-1
+
+# docker volume prune
+# docker run --rm --privileged -v `PWD`/rococo-local-kami.json:/tmp/rococo-local-kami.json parity/polkadot:v0.9.13 build-spec --raw --chain=rococo-local --disable-default-bootnode > /tmp/rococo-local-kami.json
+# docker run --rm --privileged parity/polkadot:v0.9.13 build-spec --raw --chain=rococo-local --disable-default-bootnode > rococo-local-kami-raw.json

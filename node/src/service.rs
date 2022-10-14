@@ -376,6 +376,7 @@ async fn start_node_impl<RuntimeApi, RB, BIQ, BIC>(
         > + 'static,
         BIC: FnOnce(
             Arc<TFullClient<Block, RuntimeApi, WasmExecutor<HostFunctions>>>,
+            Arc<TFullBackend<Block>>,
             Option<&Registry>,
             Option<TelemetryHandle>,
             &TaskManager,
@@ -485,6 +486,7 @@ async fn start_node_impl<RuntimeApi, RB, BIQ, BIC>(
     if validator {
         let parachain_consensus = build_consensus(
             client.clone(),
+            backend.clone(),
             prometheus_registry.as_ref(),
             telemetry.as_ref().map(|t| t.handle()),
             &task_manager,

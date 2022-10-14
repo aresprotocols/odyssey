@@ -117,6 +117,7 @@ pub async fn start_parachain_node(
 	collator_options: CollatorOptions,
 	id: ParaId,
 	hwbench: Option<sc_sysinfo::HwBench>,
+	ares_params: Vec<(&str, Option<Vec<u8>>)>,
 ) -> sc_service::error::Result<(
 	TaskManager,
 	Arc<TFullClient<Block, RuntimeApi, WasmExecutor<HostFunctions>>>,
@@ -129,6 +130,7 @@ pub async fn start_parachain_node(
 		|_| Ok(RpcModule::new(())),
 		parachain_build_import_queue,
 		|client,
+		backend,
 		 prometheus_registry,
 		 telemetry,
 		 task_manager,
@@ -137,8 +139,37 @@ pub async fn start_parachain_node(
 		 sync_oracle,
 		 keystore,
 		 force_authoring| {
-			let slot_duration = cumulus_client_consensus_aura::slot_duration(&*client)?;
+			log::info!("🚅 Setting ares_params :-) {:?}", ares_params);
+			let backend_clone = backend.clone();
+			let result: Vec<(&str, bool)> = ares_params
+				.iter()
+				.map(|(order, x)| {
+					match order {
+						&"warehouse" => {
+							match x {
+								None => (*order, false),
+								Some(exe_vecu8) => {
+									let request_base_str = sp_std::str::from_utf8(exe_vecu8).unwrap();
+									let store_request_u8 = request_base_str.encode();
+									log::info!("setting request_domain: {:?}", request_base_str);
+									if let Some(mut offchain_db) = backend_clone.offchain_storage() {
+										log::debug!("after setting request_domain: {:?}", request_base_str);
+										offchain_db.set(
+											STORAGE_PREFIX,
+											LOCAL_STORAGE_PRICE_REQUEST_DOMAIN,
+											store_request_u8.as_slice(),
+										);
+									}
+									(*order, true)
+								}
+							}
+						}
+						&_ => ("NONE", false),
+					}
+				}).collect();
+			log::info!("🚅 Results of Ares settings:{:?}", result);
 
+			let slot_duration = cumulus_client_consensus_aura::slot_duration(&*client)?;
 			let proposer_factory = sc_basic_authorship::ProposerFactory::with_proof_recording(
 				task_manager.spawn_handle(),
 				client.clone(),
