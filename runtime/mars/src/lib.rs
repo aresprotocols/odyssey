@@ -18,6 +18,9 @@
 // `construct_runtime!` does a lot of recursion and requires us to increase the limit to 256.
 #![recursion_limit = "256"]
 
+use ares_oracle::traits::IsAresOracleCall;
+use frame_support::pallet_prelude::InvalidTransaction;
+use codec::Encode;
 use cumulus_primitives_core::relay_chain::Nonce;
 use cumulus_pallet_parachain_system::RelayNumberStrictlyIncreases;
 // A few exports that help ease life for downstream crates.
@@ -53,12 +56,7 @@ use ares_para_common::AuraId as AuraId;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
-use sp_runtime::{
-    create_runtime_str, generic, impl_opaque_keys,
-    traits::{AccountIdLookup, BlakeTwo256, Block as BlockT, ConvertInto},
-    transaction_validity::{TransactionSource, TransactionValidity},
-    ApplyExtrinsicResult, Percent,
-};
+use sp_runtime::{create_runtime_str, generic, impl_opaque_keys, traits::{AccountIdLookup, BlakeTwo256, Block as BlockT, ConvertInto}, transaction_validity::{TransactionSource, TransactionValidity}, ApplyExtrinsicResult, Percent, traits, MultiAddress};
 pub use sp_runtime::{Perbill, Permill};
 use sp_std::prelude::*;
 #[cfg(feature = "std")]
@@ -76,6 +74,7 @@ use pallet_balances::NegativeImbalance;
 use pallet_transaction_payment::TargetedFeeAdjustment;
 use sp_std::marker::PhantomData;
 use parachains_common::impls::DealWithFees;
+use sp_runtime::generic::{Era, SignedPayload};
 use ares_para_common::constants::fee::WeightToFee;
 use ares_para_common::constants::{AdjustmentVariable, MinimumMultiplier, TargetBlockFullness};
 use xcm_config::{KsmLocation, XcmConfig};
@@ -491,6 +490,17 @@ pub type UncheckedExtrinsic = ares_para_common::UncheckedExtrinsic<Call, SignedE
 pub type CheckedExtrinsic = ares_para_common::CheckedExtrinsic<Call, SignedExtra>;
 pub type Executive = ares_para_common::Executive<Runtime, AllPallets, Call, SignedExtra>;
 
+impl IsAresOracleCall<Runtime, Call> for Call {
+	fn try_get_pallet_call(in_call: &Call) -> Option<&ares_oracle::pallet::Call<Runtime>> {
+		if let Self::AresOracle(
+			x_call
+		) = in_call {
+			return Some(x_call);
+		}
+		None
+	}
+}
+
 impl_runtime_apis! {
 	impl sp_api::Core<Block> for Runtime {
 		fn version() -> RuntimeVersion {
@@ -513,10 +523,19 @@ impl_runtime_apis! {
 	}
 
 	impl sp_block_builder::BlockBuilder<Block> for Runtime {
-		fn apply_extrinsic(
-			extrinsic: <Block as BlockT>::Extrinsic,
-		) -> ApplyExtrinsicResult {
-			Executive::apply_extrinsic(extrinsic)
+		// fn apply_extrinsic(
+		// 	extrinsic: <Block as BlockT>::Extrinsic,
+		// ) -> ApplyExtrinsicResult {
+		// 	Executive::apply_extrinsic(extrinsic)
+		// }
+
+		fn apply_extrinsic(extrinsic: <Block as BlockT>::Extrinsic) -> ApplyExtrinsicResult {
+			let filter_result = ares_oracle::offchain_filter::AresOracleFilter::<Runtime, Address, Call, Signature, SignedExtra>::is_author_call(&extrinsic, false);
+			// log::info!("Oracle filter_result = {:?} on apply_extrinsic", &filter_result);
+			if filter_result {
+				return Executive::apply_extrinsic(extrinsic);
+			}
+			ApplyExtrinsicResult::Err(frame_support::pallet_prelude::TransactionValidityError::Invalid(InvalidTransaction::Call))
 		}
 
 		fn finalize_block() -> <Block as BlockT>::Header {
@@ -538,7 +557,17 @@ impl_runtime_apis! {
 			tx: <Block as BlockT>::Extrinsic,
 			block_hash: <Block as BlockT>::Hash,
 		) -> TransactionValidity {
+			let filter_result = ares_oracle::offchain_filter::AresOracleFilter::<Runtime, Address, Call, Signature, SignedExtra>::is_author_call(&tx, false);
+			if filter_result {
+				return Executive::validate_transaction(source, tx, block_hash)
+			}
 			Executive::validate_transaction(source, tx, block_hash)
+		}
+	}
+
+	impl sp_offchain::OffchainWorkerApi<Block> for Runtime {
+		fn offchain_worker(header: &<Block as BlockT>::Header) {
+			Executive::offchain_worker(header)
 		}
 	}
 
@@ -572,12 +601,6 @@ impl_runtime_apis! {
 			len: u32,
 		) -> pallet_transaction_payment::FeeDetails<Balance> {
 			TransactionPayment::query_fee_details(uxt, len)
-		}
-	}
-
-	impl sp_offchain::OffchainWorkerApi<Block> for Runtime {
-		fn offchain_worker(header: &<Block as BlockT>::Header) {
-			Executive::offchain_worker(header)
 		}
 	}
 
